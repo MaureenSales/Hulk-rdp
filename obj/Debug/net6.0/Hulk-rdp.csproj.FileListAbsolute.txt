@@ -1,0 +1,15 @@
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.csproj.AssemblyReference.cache
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.GeneratedMSBuildEditorConfig.editorconfig
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.AssemblyInfoInputs.cache
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.AssemblyInfo.cs
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.csproj.CoreCompileInputs.cache
+/home/maureen/workspaces/Hulk-rdp/bin/Debug/net6.0/Hulk-rdp
+/home/maureen/workspaces/Hulk-rdp/bin/Debug/net6.0/Hulk-rdp.deps.json
+/home/maureen/workspaces/Hulk-rdp/bin/Debug/net6.0/Hulk-rdp.runtimeconfig.json
+/home/maureen/workspaces/Hulk-rdp/bin/Debug/net6.0/Hulk-rdp.dll
+/home/maureen/workspaces/Hulk-rdp/bin/Debug/net6.0/ref/Hulk-rdp.dll
+/home/maureen/workspaces/Hulk-rdp/bin/Debug/net6.0/Hulk-rdp.pdb
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.dll
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/ref/Hulk-rdp.dll
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.pdb
+/home/maureen/workspaces/Hulk-rdp/obj/Debug/net6.0/Hulk-rdp.genruntimeconfig.cache
