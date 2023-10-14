@@ -1,4 +1,6 @@
 
+using System.Linq.Expressions;
+
 namespace Hulk
 {
     public class Parser
@@ -10,17 +12,119 @@ namespace Hulk
             Tokenized = tokenized;
         }
 
-        public double Parse()
+        public ASTnode Parse()
         {
             return LevelFour();
         }
 
-        public  void Semicolon()
+        public void Semicolon()
         {
-            if( Tokenized.Tokens[Tokenized.Tokens.Count -2].Value != ";" )
+            if (Tokenized.Tokens[Tokenized.Tokens.Count - 2].Value != ";")
             {
-                throw new Exception( "; excpected");
+                throw new Exception("; excpected");
             }
+        }
+        private ASTnode Factor()
+        {
+            Token current = Current();
+
+            if (Current().Type == TokenType.Number)
+            {
+                Eat(Current(), TokenType.Number);
+                var node = new Num(current);
+                return node;
+            }
+            else if (Current().Type == TokenType.OpParenthesis)
+            {
+                Eat(Current(), TokenType.OpParenthesis);
+                var node = LevelFour();
+                Eat(Current(), TokenType.ClParenthesis);
+                return node;
+            }
+            throw new Exception("BAD");
+        }
+
+        private ASTnode LevelTwo()
+        {
+            var node = Factor();
+            while (Current().Type == TokenType.Pow)
+            {
+                var op = Current();
+                Eat(Current(), TokenType.Pow);
+                var right = Factor();
+                node = new BinOp(node, op, right);
+            }
+            return node;
+        }
+        private ASTnode LevelThree()
+        {
+            var node = LevelTwo();
+
+            while (Current().Type == TokenType.Product || Current().Type == TokenType.Division || Current().Type == TokenType.Modulo)
+            {
+                Token op = Current();
+                if (Current().Type == TokenType.Product)
+                {
+                    Eat(Current(), TokenType.Product);
+                }
+                else if (Current().Type == TokenType.Division)
+                {
+                    Eat(Current(), TokenType.Division);
+                }
+                else if (Current().Type == TokenType.Modulo)
+                {
+                    Eat(Current(), TokenType.Modulo);
+                }
+
+                node = new BinOp(node, op, LevelTwo());
+            }
+            return node;
+        }
+
+        private ASTnode LevelFour()
+        {
+            Semicolon();
+            var node = LevelThree();
+
+            while (Current().Type == TokenType.Sum || Current().Type == TokenType.Subtraction)
+            {
+                Token op = Current();
+                if (Current().Type == TokenType.Sum)
+                {
+                    Eat(Current(), TokenType.Sum);
+                }
+                else if (Current().Type == TokenType.Subtraction)
+                {
+                    Eat(Current(), TokenType.Subtraction);
+                }
+
+                node = new BinOp(node, op, LevelThree());
+            }
+            return node;
+        }
+
+        private ASTnode Boolean()
+        {
+            if (Current().Type == TokenType.True)
+            {
+                Eat(Current(), TokenType.True);
+                return new Boolean(true);
+            }
+            else if (Current().Type == TokenType.False)
+            {
+                Eat(Current(), TokenType.False);
+                return new Boolean(false);
+            }
+
+            throw new Exception("boolean");
+
+        }
+
+        private ASTnode String_()
+        {
+            var node = Current();
+            Eat(Current(), TokenType.String);
+            return new String_(node.Value);
         }
 
         private Token Current()
@@ -35,7 +139,7 @@ namespace Hulk
 
         private bool IsAtEnd()
         {
-            if (position == Tokenized.Tokens.Count-1) return true;
+            if (position == Tokenized.Tokens.Count - 1) return true;
             return false;
         }
 
@@ -46,89 +150,6 @@ namespace Hulk
                 Advance();
             }
             else throw new Exception("error");
-        }
-
-        private double Factor()
-        {
-            Token current = Current();
-            if (Current().Type == TokenType.Sum)
-            {
-                Eat(Current(), TokenType.Sum);
-            }
-            else if (Current().Type == TokenType.Subtraction)
-            {
-                Eat(Current(), TokenType.Subtraction);
-            }
-            else if (Current().Type == TokenType.Number)
-            {
-                Eat(Current(), TokenType.Number);
-                return double.Parse(current.Value);
-            }
-            else if (Current().Type == TokenType.OpParenthesis)
-            {
-                Eat(Current(), TokenType.OpParenthesis);
-                double result = LevelFour();
-                Eat(Current(), TokenType.ClParenthesis);
-                return result;
-            }
-            throw new Exception("BAD");
-        }
-
-        private double LevelTwo()
-        {
-            double result = Factor();
-            while (Current().Type == TokenType.Pow)
-            {
-                Eat(Current(), TokenType.Pow);
-                result = Math.Pow(result, Factor());
-
-            }
-            return result;
-        }
-        private double LevelThree()
-        {
-            double result = LevelTwo();
-
-            while (Current().Type == TokenType.Product || Current().Type == TokenType.Division || Current().Type == TokenType.Modulo)
-            {
-                if (Current().Type == TokenType.Product)
-                {
-                    Eat(Current(), TokenType.Product);
-                    result *= LevelTwo();
-                }
-                else if (Current().Type == TokenType.Division)
-                {
-                    Eat(Current(), TokenType.Division);
-                    result /= LevelTwo();
-                }
-                else if (Current().Type == TokenType.Modulo)
-                {
-                    Eat(Current(), TokenType.Modulo);
-                    result %= LevelTwo();
-                }
-            }
-            return result;
-        }
-
-        private double LevelFour()
-        {
-            Semicolon();
-            double result = LevelThree();
-
-            while (Current().Type == TokenType.Sum || Current().Type == TokenType.Subtraction)
-            {
-                if (Current().Type == TokenType.Sum)
-                {
-                    Eat(Current(), TokenType.Sum);
-                    result += LevelThree();
-                }
-                else if (Current().Type == TokenType.Subtraction)
-                {
-                    Eat(Current(), TokenType.Subtraction);
-                    result -= LevelThree();
-                }
-            }
-            return result;
         }
 
 

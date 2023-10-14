@@ -172,7 +172,8 @@ namespace Hulk
                 { "PI", TokenType.PI },
                 { "E", TokenType.Euler },
                 { "true", TokenType.True },
-                { "false", TokenType.False }
+                { "false", TokenType.False },
+                { "sqrt", TokenType.Sqrt },
             };
 
             if (Identifiers.Keys.Contains(result))

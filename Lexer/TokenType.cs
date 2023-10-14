@@ -3,7 +3,7 @@ namespace Hulk
     public enum TokenType
     {
         // Operators
-        Sum, Subtraction, Product, Modulo, Division, Pow,
+        Sum, Subtraction, Product, Modulo, Division, Pow, Sqrt,
 
         Assignment, If, Else, PI, Euler, True, False,
 

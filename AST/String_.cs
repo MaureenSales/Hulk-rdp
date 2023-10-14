@@ -1,10 +1,10 @@
 namespace Hulk
 {
-    public class String
+    public class String_: ASTnode
     {
         public string Value {get; private set; }
 
-        public String (string value)
+        public String_ (string value)
         {
             Value = value;
         }
