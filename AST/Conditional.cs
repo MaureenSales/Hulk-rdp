@@ -12,5 +12,10 @@ namespace Hulk
             ThenExpr = then;
             ElseExpr = else_;
         }
+
+        public override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 }

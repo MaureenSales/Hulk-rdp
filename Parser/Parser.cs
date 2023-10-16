@@ -19,39 +19,51 @@ namespace Hulk
 
         public void Semicolon()
         {
-            if (Tokenized.Tokens[Tokenized.Tokens.Count - 2].Value != ";")
+            if (Tokenized.Tokens[Tokenized.Tokens.Count - 2].Lexeme != ";")
             {
                 throw new Exception("; excpected");
             }
         }
-        private ASTnode Factor()
+        private ASTnode Primary()
         {
-            Token current = Current();
-
             if (Current().Type == TokenType.Number)
             {
                 Eat(Current(), TokenType.Number);
-                var node = new Num(current);
-                return node;
+                return new Num(Previous());
+            }
+            else if(Current().Type == TokenType.String)
+            {
+                Eat(Current(), TokenType.String);
+                return new String_(Previous().Lexeme);
             }
             else if (Current().Type == TokenType.OpParenthesis)
             {
                 Eat(Current(), TokenType.OpParenthesis);
                 var node = LevelFour();
                 Eat(Current(), TokenType.ClParenthesis);
-                return node;
+                return new Grouping(node);
             }
             throw new Exception("BAD");
         }
 
+        private ASTnode Unary()
+        {
+            if(Current().Type == TokenType.Subtraction)
+            {
+                Token op = Previous();
+                return new UnaryExpr(op, Unary());
+            }
+            return Primary();
+        }
+
         private ASTnode LevelTwo()
         {
-            var node = Factor();
+            var node = Unary();
             while (Current().Type == TokenType.Pow)
             {
-                var op = Current();
+                Token op = Previous();
                 Eat(Current(), TokenType.Pow);
-                var right = Factor();
+                var right = Unary();
                 node = new BinOp(node, op, right);
             }
             return node;
@@ -62,7 +74,7 @@ namespace Hulk
 
             while (Current().Type == TokenType.Product || Current().Type == TokenType.Division || Current().Type == TokenType.Modulo)
             {
-                Token op = Current();
+                Token op = Previous();
                 if (Current().Type == TokenType.Product)
                 {
                     Eat(Current(), TokenType.Product);
@@ -88,7 +100,7 @@ namespace Hulk
 
             while (Current().Type == TokenType.Sum || Current().Type == TokenType.Subtraction)
             {
-                Token op = Current();
+                Token op = Previous();
                 if (Current().Type == TokenType.Sum)
                 {
                     Eat(Current(), TokenType.Sum);
@@ -120,11 +132,60 @@ namespace Hulk
 
         }
 
+        private ASTnode Equality()
+        {
+            var node = Comparison();
+            while (Current().Type == TokenType.Equality || Current().Type == TokenType.NotEqual)
+            {
+                Token op = Previous();
+                if (Current().Type == TokenType.Equality)
+                {
+                    Eat(Current(), TokenType.Equality);
+                }
+                else if (Current().Type == TokenType.NotEqual)
+                {
+                    Eat(Current(), TokenType.NotEqual);
+                }
+                ASTnode right = Comparison();
+
+                node = new BinOp(node, op, right);
+
+            }
+            return node;
+        }
+
+        private ASTnode Comparison()
+        {
+            ASTnode node = LevelFour();
+            while (Current().Type == TokenType.LessThan || Current().Type == TokenType.LessOrEqual || Current().Type == TokenType.GreaterThan || Current().Type == TokenType.GreaterOrEqual)
+            {
+                Token op = Previous();
+                if (Current().Type == TokenType.LessThan)
+                {
+                    Eat(Current(), TokenType.LessThan);
+                }
+                else if (Current().Type == TokenType.LessOrEqual)
+                {
+                    Eat(Current(), TokenType.LessOrEqual);
+                }
+                else if (Current().Type == TokenType.GreaterThan)
+                {
+                    Eat(Current(), TokenType.GreaterThan);
+                }
+                else if (Current().Type == TokenType.GreaterOrEqual)
+                {
+                    Eat(Current(), TokenType.GreaterOrEqual);
+                }
+                node = new BinOp(node, op, LevelFour());
+            }
+            return node;
+        }
+
         private ASTnode String_()
         {
             var node = Current();
             Eat(Current(), TokenType.String);
-            return new String_(node.Value);
+            return new String_(node.Lexeme);
         }
 
         private Token Current()
@@ -132,26 +193,37 @@ namespace Hulk
             return Tokenized.Tokens[position];
         }
 
+        private Token Previous()
+        {
+            return Tokenized.Tokens[position - 1];
+        }
+
         private Token Advance()
         {
-            return Tokenized.Tokens[position++];
+            if (!IsAtEnd()) position++;
+            return Previous();
         }
 
         private bool IsAtEnd()
         {
-            if (position == Tokenized.Tokens.Count - 1) return true;
+            if (Current().Type == TokenType.Eof) return true;
             return false;
         }
 
         private void Eat(Token current, TokenType type)
         {
-            if (current.Type == type && !IsAtEnd())
+            if (current.Type == type)
             {
                 Advance();
             }
             else throw new Exception("error");
         }
 
+        private bool Check(TokenType type)
+        {
+            if (IsAtEnd()) return false;
+            return Current().Type == type;
+        }
 
     }
 }

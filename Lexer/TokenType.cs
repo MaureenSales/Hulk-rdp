@@ -3,16 +3,17 @@ namespace Hulk
     public enum TokenType
     {
         // Operators
-        Sum, Subtraction, Product, Modulo, Division, Pow, Sqrt,
-
-        Assignment, If, Else, PI, Euler, True, False,
+        Sum, Subtraction, Product, Modulo, Division, Pow, Sqrt, Assignment,
 
         // Boolean operators
         Equality, NotEqual, LessThan, GreaterThan, LessOrEqual, GreaterOrEqual, Negation, Imply,
         Conjunction, Disjunction,
 
-        // Types
-        Identifier, String, Number, Function, Let, In,
+        // Literals
+        Identifier, String, Number, 
+        
+        //KeyWords
+        Function, Let, In, Print, If, Else, PI, Euler, True, False,
 
         // Symbols    
         OpParenthesis, ClParenthesis, Comma, Semicolon, Colon,

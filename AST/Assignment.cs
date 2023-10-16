@@ -10,5 +10,10 @@ namespace Hulk
             Name = name;
             Value = value;
         }
+
+        public override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 }
