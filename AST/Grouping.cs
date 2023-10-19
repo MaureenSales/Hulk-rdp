@@ -2,11 +2,11 @@ namespace Hulk
 {
      public class Grouping : ASTnode
         {
-            public ASTnode expression;
+            public ASTnode Expression;
              
             public Grouping(ASTnode expression)
             {
-                this.expression = expression;
+                Expression = expression;
             }
              
             public override T Accept<T>(IVisitor<T> visitor)

@@ -99,7 +99,7 @@ namespace Hulk
                     else
                     {
                         // unexpected character
-                        Error.Error_(line, Error.ErrorType.LEXICAL, "Unexpected character.");
+                        Error.Error_(line, Error.ErrorType.LEXICAL, "'" + c + "'", "Unexpected character.");
                     }
                     break;
 
@@ -123,7 +123,7 @@ namespace Hulk
 
             if (found == false)
             {
-                Error.Error_(line, Error.ErrorType.LEXICAL, "Expected '\"' but not found.");
+                Error.Error_(line, Error.ErrorType.LEXICAL, " at '" + result + "'", "Expected '\"' but not found.");
             }
 
             AddToken(TokenType.String, result, -1, line);
@@ -148,7 +148,7 @@ namespace Hulk
                 }
                 if (IsAlphaC(Peek()))
                 {
-                    Error.Error_(line, Error.ErrorType.LEXICAL, "Not valid");
+                    Error.Error_(line, Error.ErrorType.LEXICAL,result, "Not valid");
                 }
             result = Line.Substring(start, position - start);
             AddToken(TokenType.Number, result, -1, line);

@@ -1,5 +1,6 @@
 
 using System.Linq.Expressions;
+using System.Text.RegularExpressions;
 
 namespace Hulk
 {
@@ -31,7 +32,7 @@ namespace Hulk
                 Eat(Current(), TokenType.Number);
                 return new Num(Previous());
             }
-            else if(Current().Type == TokenType.String)
+            else if (Current().Type == TokenType.String)
             {
                 Eat(Current(), TokenType.String);
                 return new String_(Previous().Lexeme);
@@ -40,15 +41,15 @@ namespace Hulk
             {
                 Eat(Current(), TokenType.OpParenthesis);
                 var node = LevelFour();
-                Eat(Current(), TokenType.ClParenthesis);
+                Consume(TokenType.ClParenthesis, "Expect ')' after expression.");
                 return new Grouping(node);
             }
-            throw new Exception("BAD");
+            throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Expect expression");
         }
 
         private ASTnode Unary()
         {
-            if(Current().Type == TokenType.Subtraction)
+            if (Current().Type == TokenType.Subtraction)
             {
                 Token op = Previous();
                 return new UnaryExpr(op, Unary());
@@ -216,13 +217,57 @@ namespace Hulk
             {
                 Advance();
             }
-            else throw new Exception("error");
         }
+        private Token Consume(TokenType type, String message)
+        {
+            if (Check(type)) return Advance();
 
+            throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", message);
+        }
         private bool Check(TokenType type)
         {
             if (IsAtEnd()) return false;
             return Current().Type == type;
+        }
+
+        List<Stmt> parse()
+        {
+            List<Stmt> statements = new List<Stmt>();
+            while (!IsAtEnd())
+            {
+                statements.Add(Statement());
+            }
+
+            return statements;
+        }
+
+        private Stmt Statement()
+        {
+
+            if (Current().Type == TokenType.If) return Eat(Current(), TokenType.If); IfStatement();
+            else if (Current().Type == TokenType.Print) Eat(Current(), TokenType.Print); return PrintStatement();
+
+            return ExpressionStatement();
+        }
+
+        private Stmt PrintStatement()
+        {
+            Eat(Current(), TokenType.OpParenthesis);
+            ASTnode value = Expr();
+            Consume(TokenType.Semicolon, "Expect ';' after value.");
+            return new Print(value);
+        }
+
+        private ASTnode Expr()
+        {
+            return Assignment();
+        }
+
+        private Stmt ExpressionStatement()
+        {
+            ASTnode expr = LevelFour();
+            Consume(TokenType.Semicolon, "Expect ';' after expression.");
+            return new ExpressionStmt(expr);
         }
 
     }

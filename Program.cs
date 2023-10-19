@@ -7,7 +7,14 @@ namespace Hulk
         {
             System.Console.Write("> ");
            string input = Console.ReadLine();
-           run(input);
+           try
+           {
+                run(input);
+           }
+           catch (Exception ex)
+           {
+                System.Console.WriteLine(ex.Message);
+           }
         }
 
         private static void run (string input)
@@ -18,6 +25,9 @@ namespace Hulk
             {
                 System.Console.WriteLine($"{item.Type}  {item.Lexeme}");
             }
+            Parser parser = new Parser(lexer);
+            ASTnode expression = parser.parse();
+            if(Error.HadError) return;
         }
     }
 }

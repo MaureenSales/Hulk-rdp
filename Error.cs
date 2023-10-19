@@ -2,27 +2,21 @@ using System.Reflection.Metadata;
 
 namespace Hulk
 {
-    public class Error
+    public class Error: Exception
     {
-        public static void Error_( int line, ErrorType type, string error)
+        public static Exception Error_(int line, ErrorType type, string where, string error)
         {
-            report(line, "", type, error);
-        }
-
-        private static void report( int line, string where, ErrorType type, string error)
-        {
-            System.Console.WriteLine($"{type} ERROR: line {line} {where} {error}.");
             HadError = true;
+            throw new Exception($"{type} ERROR: line {line} {where} {error}.");
         }
 
         public static bool HadError = false;
 
         public enum ErrorType
         {
-           LEXICAL,
-           SINTACTIC,
-           SEMANTIC
+            LEXICAL,
+            SINTACTIC,
+            SEMANTIC
         }
-
     }
 }
