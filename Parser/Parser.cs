@@ -18,13 +18,6 @@ namespace Hulk
             return LevelFour();
         }
 
-        public void Semicolon()
-        {
-            if (Tokenized.Tokens[Tokenized.Tokens.Count - 2].Lexeme != ";")
-            {
-                throw new Exception("; excpected");
-            }
-        }
         private ASTnode Primary()
         {
             if (Current().Type == TokenType.Number)
@@ -36,6 +29,11 @@ namespace Hulk
             {
                 Eat(Current(), TokenType.String);
                 return new String_(Previous().Lexeme);
+            }
+            else if (Current().Type == TokenType.Identifier)
+            {
+                Eat(Current(), TokenType.Identifier);
+                return new Variable(Previous());
             }
             else if (Current().Type == TokenType.OpParenthesis)
             {
@@ -54,7 +52,45 @@ namespace Hulk
                 Token op = Previous();
                 return new UnaryExpr(op, Unary());
             }
-            return Primary();
+            return Call(); ;
+        }
+
+        private ASTnode Call()
+        {
+            ASTnode expr = Primary();
+
+            while (true)
+            {
+                if (Current().Type == TokenType.OpParenthesis)
+                {
+                    Eat(Current(), TokenType.OpParenthesis);
+                    expr = FinishCall(expr);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return expr;
+        }
+
+        private ASTnode FinishCall(ASTnode callee)
+        {
+            List<ASTnode> arguments = new List<ASTnode>();
+            if (!Check(TokenType.ClParenthesis))
+            {
+                do
+                {
+
+                    arguments.Add(Expr());
+                } while (Eat(Current(), TokenType.Comma));
+            }
+
+            Token paren = Consume(TokenType.ClParenthesis,
+                                  "Expect ')' after arguments.");
+
+            return new CallFunction(callee, paren, arguments);
         }
 
         private ASTnode LevelTwo()
@@ -96,7 +132,6 @@ namespace Hulk
 
         private ASTnode LevelFour()
         {
-            Semicolon();
             var node = LevelThree();
 
             while (Current().Type == TokenType.Sum || Current().Type == TokenType.Subtraction)
@@ -189,6 +224,7 @@ namespace Hulk
             return new String_(node.Lexeme);
         }
 
+
         private Token Current()
         {
             return Tokenized.Tokens[position];
@@ -211,12 +247,14 @@ namespace Hulk
             return false;
         }
 
-        private void Eat(Token current, TokenType type)
+        private bool Eat(Token current, TokenType type)
         {
             if (current.Type == type)
             {
                 Advance();
+                return true;
             }
+            else return false;
         }
         private Token Consume(TokenType type, String message)
         {
@@ -244,8 +282,14 @@ namespace Hulk
         private Stmt Statement()
         {
 
-            if (Current().Type == TokenType.If) return Eat(Current(), TokenType.If); IfStatement();
-            else if (Current().Type == TokenType.Print) Eat(Current(), TokenType.Print); return PrintStatement();
+            if (Current().Type == TokenType.If)
+            {
+                Eat(Current(), TokenType.If); return IfStatement();
+            }
+            else if (Current().Type == TokenType.Print)
+            {
+                Eat(Current(), TokenType.Print); return PrintStatement();
+            }
 
             return ExpressionStatement();
         }
@@ -270,5 +314,104 @@ namespace Hulk
             return new ExpressionStmt(expr);
         }
 
+        private Stmt Declaration()
+        {
+            if (Current().Type == TokenType.Identifier)
+            {
+                Eat(Current(), TokenType.Identifier);
+                return VarDeclaration();
+            }
+            return Statement();
+        }
+
+        private Stmt VarDeclaration()
+        {
+            Token name = Consume(TokenType.Identifier, "Expect variable name.");
+
+            ASTnode initializer = null;
+            if (Current().Type == TokenType.Assignment)
+            {
+                Eat(Current(), TokenType.Assignment);
+                initializer = Expr();
+            }
+
+            Consume(TokenType.Semicolon, "Expect ';' after variable declaration.");
+            return new VariableStmt(name, initializer);
+        }
+
+        private ASTnode Assignment()
+        {
+            ASTnode expr = Or();
+
+            if (Current().Type == TokenType.Assignment)
+            {
+                Token equals = Previous();
+                ASTnode value = Assignment();
+
+                if (expr is Variable)
+                {
+                    Token name = ((Variable)expr).Name;
+                    return new Assignment(name.Lexeme, value);
+                }
+
+                throw Error.Error_(equals.Line, Error.ErrorType.SINTACTIC, "", "Invalid assignment target.");
+            }
+
+            return expr;
+
+        }
+
+        private ASTnode Or()
+        {
+            ASTnode expr = And();
+
+            while (Current().Type == TokenType.Disjunction)
+            {
+                Token op = Previous();
+                ASTnode right = And();
+                expr = new Logical(expr, op, right);
+            }
+
+            return expr;
+        }
+
+        private ASTnode And()
+        {
+            ASTnode expr = Equality();
+
+            while (Current().Type == TokenType.Conjunction)
+            {
+                Eat(Current(), TokenType.Conjunction);
+                Token op = Previous();
+                ASTnode right = Equality();
+                expr = new Logical(expr, op, right);
+            }
+
+            return expr;
+        }
+
+        private Stmt IfStatement()
+        {
+            Consume(TokenType.OpParenthesis, "Expect '(' after 'if'.");
+            ASTnode condition = Expr();
+            Consume(TokenType.ClParenthesis, "Expect ')' after if condition.");
+
+            Stmt then_body = Statement();
+            Stmt else_body = null;
+
+            if (Current().Type == TokenType.Else)
+            {
+                Eat(Current(), TokenType.Else);
+                else_body = Statement();
+            }
+            else
+            {
+                throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "", "Expect 'else declaration' after if condition");
+            }
+
+            return new IfStmt(condition, then_body, else_body);
+        }
+
     }
+
 }

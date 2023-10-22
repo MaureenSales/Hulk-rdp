@@ -4,9 +4,9 @@ namespace Hulk
     {
         public ASTnode Callee { get; private set; }
         public Token Paren { get; private set; }
-        public List<Token> Parameters { get; private set; }
+        public List<ASTnode> Parameters { get; private set; }
 
-        public CallFunction( ASTnode callee, Token paren, List<Token> parameters)
+        public CallFunction( ASTnode callee, Token paren, List<ASTnode> parameters)
         {
             Callee = callee;
             Paren = paren;

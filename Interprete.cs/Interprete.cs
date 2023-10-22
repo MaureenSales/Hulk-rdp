@@ -1,7 +1,3 @@
-using System.Security.AccessControl;
-using System;
-using Microsoft.CSharp.RuntimeBinder;
-
 namespace Hulk
 {
     public class Interprete : ASTnode.IVisitor<object>, Stmt.IVisitor<object>
@@ -14,23 +10,41 @@ namespace Hulk
         {
             return string_.Value;
         }
-        public Object Visit(Grouping expr)
+
+        public object Visit(Logical expr)
+        {
+            object left = evaluate(expr.Left);
+
+            if (expr.Operator.Type == TokenType.Disjunction)
+            {
+                if (IsTruthy(left)) return left;
+            }
+            else
+            {
+                if (!IsTruthy(left)) return left;
+            }
+
+            return evaluate(expr.Right);
+        }
+
+        public object Visit(Grouping expr)
         {
             return expr.Expression;
         }
-        private Object evaluate(ASTnode expr)
+        private object evaluate(ASTnode expr)
         {
             return expr.Accept(this);
         }
 
-        public void Visit(ExpressionStmt stmt)
+        public object Visit(ExpressionStmt stmt)
         {
             evaluate(stmt.expression);
+            return null;
         }
 
-        public Object Visit(UnaryExpr expr)
+        public object Visit(UnaryExpr expr)
         {
-            Object right = evaluate(expr.Right);
+            object right = evaluate(expr.Right);
 
             switch (expr.Operator.Type)
             {
@@ -42,17 +56,17 @@ namespace Hulk
             return null;
         }
 
-        private bool IsTruthy(Object ob)
+        private bool IsTruthy(object ob)
         {
             if (ob == null) return false;
             if (ob is Boolean) return (bool)ob;
             return true;
         }
 
-        public Object Visit(BinOp expr)
+        public object Visit(BinOp expr)
         {
-            Object left = evaluate(expr.Left);
-            Object right = evaluate(expr.Right);
+            object left = evaluate(expr.Left);
+            object right = evaluate(expr.Right);
 
             switch (expr.Op.Type)
             {
@@ -101,7 +115,7 @@ namespace Hulk
             // Unreachable.
             return null;
         }
-        private bool IsEqual(Object a, Object b)
+        private bool IsEqual(object a, object b)
         {
             if (a == null && b == null) return true;
             if (a == null) return false;
@@ -121,17 +135,76 @@ namespace Hulk
             throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operands must be numbers.");
         }
 
-        private void interpret(ASTnode expression)
+        private void Execute(Stmt stmt)
         {
-            try
-            {
-                Object value = evaluate(expression);
-            }
-            catch (Error)
-            {
-
-            }
+            stmt.Accept(this);
         }
 
+        public object Visit(Print stmt)
+        {
+            evaluate(stmt.Expr);
+            return null;
+        }
+
+        public object Visit(VariableStmt stmt)
+        {
+            object value = null;
+            if (stmt.Initializer != null)
+            {
+                value = evaluate(stmt.Initializer);
+            }
+            return null;
+        }
+
+        public object Visit(Assignment expr)
+        {
+            object value = evaluate(expr.Value);
+            return value;
+        }
+
+        public object Visit(IfStmt stmt)
+        {
+            if (IsTruthy(evaluate(stmt.Condition)))
+            {
+                Execute(stmt.ThenBody);
+            }
+            else if (stmt.ElseBody != null)
+            {
+                Execute(stmt.ElseBody);
+            }
+            return null;
+        }
+
+        public object Visit(CallFunction expr)
+        {
+            object callee = evaluate(expr.Callee);
+
+            List<object> arguments = new List<object>();
+            foreach (ASTnode argument in expr.Parameters)
+            {
+                arguments.Add(evaluate(argument));
+            }
+            return callee;//arreglar
+        }
+
+        public object Visit(Boolean _boolean)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Visit(Let _let)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Visit(Variable _var)
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Visit(FunctionStmt _stmt)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.IO;
 namespace Hulk
 {
@@ -5,29 +6,29 @@ namespace Hulk
     {
         public static void Main()
         {
-            System.Console.Write("> ");
-           string input = Console.ReadLine();
-           try
-           {
-                run(input);
-           }
-           catch (Exception ex)
-           {
-                System.Console.WriteLine(ex.Message);
-           }
+            Console.BackgroundColor = ConsoleColor.Gray;
+            Console.Clear();
+            while (true)
+            {
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                System.Console.Write(">>> ");
+                Console.ForegroundColor = ConsoleColor.White;
+                string input = Console.ReadLine();
+                if (input == "exit") break;
+                try
+                {
+                    Lexer lexer = new Lexer(input);
+                    foreach (var t in lexer.Tokens)
+                        System.Console.WriteLine($"{t.Type}  {t.Lexeme}");
+                }
+                catch (System.Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    System.Console.WriteLine(e.Message);
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
+            }
         }
 
-        private static void run (string input)
-        {
-            Lexer lexer = new Lexer(input);
-            List<Token> tokens = lexer.Tokens;
-            foreach (var item in tokens)
-            {
-                System.Console.WriteLine($"{item.Type}  {item.Lexeme}");
-            }
-            Parser parser = new Parser(lexer);
-            ASTnode expression = parser.parse();
-            if(Error.HadError) return;
-        }
     }
 }

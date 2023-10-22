@@ -10,11 +10,11 @@ namespace Hulk
 
         public Lexer(string line_)
         {
-            Line = line_ ;
-            scanTokens();
+            Line = line_;
+            ScanTokens();
         }
 
-        public List<Token> scanTokens()
+        public List<Token> ScanTokens()
         {
             while (!IsAtEnd())
             {
@@ -70,6 +70,12 @@ namespace Hulk
                 case '!':
                     ScanNegation(c);
                     break;
+                case '&':
+                    AddToken(TokenType.Conjunction, "&", -1, line);
+                    break;
+                case '|':
+                    AddToken(TokenType.Disjunction, "|", -1, line);
+                    break;
                 case ',':
                     AddToken(TokenType.Comma, ",", position - 1, line);
                     break;
@@ -80,8 +86,8 @@ namespace Hulk
                     AddToken(TokenType.Colon, ":", position - 1, line);
                     break;
                 case '\n':
-                line++;
-                break;
+                    line++;
+                    break;
                 case ' ':
                 case '\t':
                 case '\r':
@@ -134,26 +140,25 @@ namespace Hulk
         {
             string result = "";
 
+            while (IsDigit(Peek()))
+            {
+                Advance();
+            }
+            if (Peek() == '.' && IsDigit(PeekNext()))
+            {
+                Advance();
                 while (IsDigit(Peek()))
                 {
                     Advance();
                 }
-                if (Peek() == '.' && IsDigit(PeekNext()))
-                {
-                    Advance();
-                    while(IsDigit(Peek())) 
-                    {
-                        Advance();
-                    }
-                }
-                if (IsAlphaC(Peek()))
-                {
-                    Error.Error_(line, Error.ErrorType.LEXICAL,result, "Not valid");
-                }
+            }
+            if (IsAlphaC(Peek()))
+            {
+                Error.Error_(line, Error.ErrorType.LEXICAL, result, "Not valid");
+            }
             result = Line.Substring(start, position - start);
             AddToken(TokenType.Number, result, -1, line);
         }
-
 
         private void ScanIdentifier(char c = '?')
         {
@@ -161,7 +166,7 @@ namespace Hulk
             result += c;
             while (!IsAtEnd())
             {
-                
+
                 if (!IsAlphaC(Current()) && !IsDigit(Current()))
                 {
                     break;
