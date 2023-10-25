@@ -16,7 +16,6 @@ namespace Hulk
             T Visit(Grouping _group);
             T Visit(CallFunction _call);
             T Visit(Logical _logical);
-            T Visit(Let _let);
             T Visit(Variable _var);
 
         }
@@ -32,7 +31,7 @@ namespace Hulk
             R Visit(Print _print);
             R Visit(VariableStmt _stmt);
             R Visit(ExpressionStmt _stmt);
-
+            R Visit(Let _let);
 
         }  
             public abstract R Accept<R>(IVisitor<R> visitor);

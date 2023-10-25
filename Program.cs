@@ -18,13 +18,18 @@ namespace Hulk
                 try
                 {
                     Lexer lexer = new Lexer(input);
-                    foreach (var t in lexer.Tokens)
-                        System.Console.WriteLine($"{t.Type}  {t.Lexeme}");
+                    Parser parser = new Parser(lexer);
+                    List<Stmt> stmts = parser.Parse();
+                    // AstPrinter p = new AstPrinter();
+                    // foreach(Stmt s in stmts)p.Print(s);
+                    Interprete interprete = new Interprete();
+                    foreach(Stmt stmt in stmts)interprete.Execute(stmt);
                 }
                 catch (System.Exception e)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     System.Console.WriteLine(e.Message);
+                    System.Console.WriteLine(e.StackTrace);
                     Console.ForegroundColor = ConsoleColor.White;
                 }
             }

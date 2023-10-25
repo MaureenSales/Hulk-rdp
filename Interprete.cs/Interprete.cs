@@ -135,14 +135,14 @@ namespace Hulk
             throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operands must be numbers.");
         }
 
-        private void Execute(Stmt stmt)
+        public void Execute(Stmt stmt)
         {
             stmt.Accept(this);
         }
 
         public object Visit(Print stmt)
         {
-            evaluate(stmt.Expr);
+            System.Console.WriteLine(evaluate(stmt.Expr));
             return null;
         }
 

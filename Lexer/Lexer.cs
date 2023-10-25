@@ -154,7 +154,7 @@ namespace Hulk
             }
             if (IsAlphaC(Peek()))
             {
-                Error.Error_(line, Error.ErrorType.LEXICAL, result, "Not valid");
+                Error.Error_(line, Error.ErrorType.LEXICAL, result, " Input not valid");
             }
             result = Line.Substring(start, position - start);
             AddToken(TokenType.Number, result, -1, line);
