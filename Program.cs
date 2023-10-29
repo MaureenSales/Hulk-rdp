@@ -19,11 +19,11 @@ namespace Hulk
                 {
                     Lexer lexer = new Lexer(input);
                     Parser parser = new Parser(lexer);
-                    List<Stmt> stmts = parser.Parse();
+                    List<ASTnode> stmts = parser.Parse();
                     // AstPrinter p = new AstPrinter();
-                    // foreach(Stmt s in stmts)p.Print(s);
+                    // foreach(ASTnode s in stmts)p.Print_(s);
                     Interprete interprete = new Interprete();
-                    foreach(Stmt stmt in stmts)interprete.Execute(stmt);
+                    foreach(ASTnode stmt in stmts)interprete.evaluate(stmt);
                 }
                 catch (System.Exception e)
                 {

@@ -55,6 +55,9 @@ namespace Hulk
                 case '=':
                     ScanAssignment(c);
                     break;
+                case '@':
+                    AddToken(TokenType.Concat, "@", position - 1, line);
+                    break;
                 case '<':
                     ScanComparative(c);
                     break;

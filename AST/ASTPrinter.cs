@@ -1,10 +1,15 @@
+using System.Reflection.Metadata.Ecma335;
+
 namespace Hulk
 {
-    public class AstPrinter : Stmt.IVisitor<string> , ASTnode.IVisitor<string>{
-        public void Print(Stmt stmt){
+    public class AstPrinter : ASTnode.IVisitor<string>
+    {
+        public void Print_(ASTnode stmt)
+        {
             Console.WriteLine(stmt.Accept(this));
         }
-        private string Print(ASTnode node){
+        private string Print(ASTnode node)
+        {
             return node.Accept(this);
         }
 
@@ -18,17 +23,12 @@ namespace Hulk
             return Print(_print.Expr);
         }
 
-        public string Visit(VariableStmt _stmt)
-        {
-            throw new NotImplementedException();
-        }
-
         public string Visit(ExpressionStmt _stmt)
         {
             return Print(_stmt.expression);
         }
 
-        public string Visit(Let _let)
+        public string Visit(LetStmt _let)
         {
             throw new NotImplementedException();
         }
@@ -75,7 +75,7 @@ namespace Hulk
 
         public string Visit(Logical _logical)
         {
-            throw new NotImplementedException();
+            return $"( {Print(_logical.Left)}  {_logical.Operator.Lexeme}  {Print(_logical.Right)} ) ";
         }
 
         public string Visit(Variable _var)
@@ -83,13 +83,21 @@ namespace Hulk
             throw new NotImplementedException();
         }
 
-        string Visit(FunctionStmt _stmt){
-            throw new NotImplementedException();
-        }
-
-        string Stmt.IVisitor<string>.Visit(FunctionStmt _stmt)
+        string Visit(FunctionStmt _stmt)
         {
             throw new NotImplementedException();
         }
-    } 
+
+        public string Visit(MathExpr _value)
+        {
+            if (_value.Value == Math.E) return _value.Value.ToString();
+            else if (_value.Value == Math.PI) return _value.Value.ToString();
+            return "";
+        }
+
+        string ASTnode.IVisitor<string>.Visit(FunctionStmt _stmt)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

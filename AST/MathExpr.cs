@@ -1,12 +1,12 @@
 namespace Hulk
 {
-    public class Print: ASTnode
+    public class MathExpr: ASTnode
     {
-        public ASTnode Expr { get; private set; }
+        public double Value { get; private set; }
 
-        public Print(ASTnode expr)
+        public MathExpr( double value)
         {
-            Expr = expr;
+            Value = value;
         }
 
         public override T Accept<T>(IVisitor<T> visitor)

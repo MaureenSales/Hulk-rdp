@@ -1,7 +1,12 @@
 namespace Hulk
 {
-    public class Interprete : ASTnode.IVisitor<object>, Stmt.IVisitor<object>
+    public class Interprete : ASTnode.IVisitor<object>
     {
+        public object evaluate(ASTnode expr)
+        {
+            return expr.Accept(this);
+        }
+
         public object Visit(Num num)
         {
             return num.Value;
@@ -31,10 +36,6 @@ namespace Hulk
         {
             return expr.Expression;
         }
-        private object evaluate(ASTnode expr)
-        {
-            return expr.Accept(this);
-        }
 
         public object Visit(ExpressionStmt stmt)
         {
@@ -56,12 +57,6 @@ namespace Hulk
             return null;
         }
 
-        private bool IsTruthy(object ob)
-        {
-            if (ob == null) return false;
-            if (ob is Boolean) return (bool)ob;
-            return true;
-        }
 
         public object Visit(BinOp expr)
         {
@@ -110,49 +105,33 @@ namespace Hulk
                 case TokenType.Pow:
                     CheckNumberOperands(expr.Op, left, right);
                     return Math.Pow((double)left, (double)right);
+                case TokenType.Concat:
+                    string concated = "";
+                    if (left is string) concated += left;
+                    else if (left is double) concated += left;
+                    else if (left is bool) concated += left;
+                    else
+                    {
+                        throw Error.Error_(expr.Op.Line, Error.ErrorType.SEMANTIC, "", " Operator '@' cannot be used between " + left + " " + right);
+                    }
+                    if (right is string) concated += right;
+                    else if (right is double) concated += right;
+                    else if (right is bool) concated += right;
+                    else
+                    {
+                        throw Error.Error_(expr.Op.Line, Error.ErrorType.SEMANTIC, "", " Operator '@' cannot be used between " + left + " " + right);
+                    }
+                    return concated;
+
             }
 
             // Unreachable.
             return null;
         }
-        private bool IsEqual(object a, object b)
-        {
-            if (a == null && b == null) return true;
-            if (a == null) return false;
-            if (b == null) return false;
-
-            return a.Equals(b);
-        }
-
-        private void CheckNumberOperand(Token op, Object operand)
-        {
-            if (operand is Double) return;
-            throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operand must be a number.");
-        }
-        private void CheckNumberOperands(Token op, Object left, Object right)
-        {
-            if (left is Double && right is Double) return;
-            throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operands must be numbers.");
-        }
-
-        public void Execute(Stmt stmt)
-        {
-            stmt.Accept(this);
-        }
 
         public object Visit(Print stmt)
         {
             System.Console.WriteLine(evaluate(stmt.Expr));
-            return null;
-        }
-
-        public object Visit(VariableStmt stmt)
-        {
-            object value = null;
-            if (stmt.Initializer != null)
-            {
-                value = evaluate(stmt.Initializer);
-            }
             return null;
         }
 
@@ -166,35 +145,32 @@ namespace Hulk
         {
             if (IsTruthy(evaluate(stmt.Condition)))
             {
-                Execute(stmt.ThenBody);
+                evaluate(stmt.ThenBody);
             }
             else if (stmt.ElseBody != null)
             {
-                Execute(stmt.ElseBody);
+                evaluate(stmt.ElseBody);
             }
             return null;
         }
 
-        public object Visit(CallFunction expr)
-        {
-            object callee = evaluate(expr.Callee);
-
-            List<object> arguments = new List<object>();
-            foreach (ASTnode argument in expr.Parameters)
-            {
-                arguments.Add(evaluate(argument));
-            }
-            return callee;//arreglar
-        }
 
         public object Visit(Boolean _boolean)
         {
-            throw new NotImplementedException();
+            return _boolean.Value;
         }
 
-        public object Visit(Let _let)
+        public object Visit(CallFunction expr)
         {
             throw new NotImplementedException();
+        }
+        public object Visit(LetStmt _let)
+        {
+            foreach (var item in _let.Declarations)
+            {
+                evaluate(item);
+            }
+            return evaluate(_let.Body);
         }
 
         public object Visit(Variable _var)
@@ -206,5 +182,35 @@ namespace Hulk
         {
             throw new NotImplementedException();
         }
+
+        public object Visit(MathExpr _value)
+        {
+            throw new NotImplementedException();
+        }
+        private bool IsTruthy(object ob)
+        {
+            if (ob == null) return false;
+            if (ob is bool) return (bool)ob;
+            throw Error.Error_(1, Error.ErrorType.SEMANTIC, "", "Operand must be a boolean.");
+        }
+        private void CheckNumberOperand(Token op, Object operand)
+        {
+            if (operand is Double) return;
+            throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operand must be a number.");
+        }
+        private void CheckNumberOperands(Token op, Object left, Object right)
+        {
+            if (left is Double && right is Double) return;
+            throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operands must be numbers.");
+        }
+        private bool IsEqual(object a, object b)
+        {
+            if (a == null && b == null) return true;
+            if (a == null) return false;
+            if (b == null) return false;
+
+            return a.Equals(b);
+        }
+
     }
 }

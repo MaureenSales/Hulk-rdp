@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-using System.Xml;
 namespace Hulk
 {
     public class Parser
@@ -11,9 +9,9 @@ namespace Hulk
             Tokenized = tokenized;
         }
 
-        public List<Stmt> Parse()
+        public List<ASTnode> Parse()
         {
-            List<Stmt> statements = new List<Stmt>();
+            List<ASTnode> statements = new List<ASTnode>();
             while (!IsAtEnd())
             {
                 statements.Add(Statement());
@@ -23,338 +21,96 @@ namespace Hulk
 
         private ASTnode Primary()
         {
-            if (Current().Type == TokenType.False)
+            switch (Current().Type)
             {
-                return new Boolean(false);
-            }
-            else if (Current().Type == TokenType.True)
-            {
-                return new Boolean(true);
-            }
-            else if (Current().Type == TokenType.Number)
-            {
-                Eat(Current(), TokenType.Number);
-                return new Num(Previous());
-            }
-            else if (Current().Type == TokenType.String)
-            {
-                Eat(Current(), TokenType.String);
-                return new String_(Previous().Lexeme);
-            }
-            else if (Current().Type == TokenType.Identifier)
-            {
-                Eat(Current(), TokenType.Identifier);
-                return new Variable(Previous());
-            }
-            else if (Current().Type == TokenType.OpParenthesis)
-            {
-                Eat(Current(), TokenType.OpParenthesis);
-                var node = LevelFour();
-                Consume(TokenType.ClParenthesis, "Expect ')' after expression.");
-                return new Grouping(node);
-            }
-            else if (Current().Type == TokenType.GreaterThan || Current().Type == TokenType.GreaterOrEqual || Current().Type == TokenType.LessThan || Current().Type == TokenType.LessOrEqual || Current().Type == TokenType.NotEqual || Current().Type == TokenType.Equality || Current().Type == TokenType.Sum || Current().Type == TokenType.Pow || Current().Type == TokenType.Product || Current().Type == TokenType.Division || Current().Type == TokenType.Modulo)
-            {
-                throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Missing left-hand operand.");
+                case TokenType.False:
+                    position++;
+                    return new Boolean(false);
+                case TokenType.True:
+                    position++;
+                    return new Boolean(true);
+                case TokenType.PI:
+                    position++;
+                    return new MathExpr(Math.PI);
+                case TokenType.Euler:
+                    position++;
+                    return new MathExpr(Math.E);
+                case TokenType.Identifier:
+                    position++;
+                    return new Variable(Previous());
+                case TokenType.Number:
+                    position++;
+                    return new Num(Previous());
+                case TokenType.String:
+                    position++;
+                    return new String_(Previous().Lexeme);
+                case TokenType.OpParenthesis:
+                    position++;
+                    var node = LevelFour();
+                    Consume(TokenType.ClParenthesis, "Expect ')' after expression.");
+                    return new Grouping(node);
+
+                default: throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Missing left-hand or right-hand operand.");
+
             }
 
-            throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Expect expression");
+
+
         }
+        private ASTnode Unary()
+        {
+            while (Eat(TokenType.Subtraction))
+            {
+                Token op = Previous();
+                ASTnode right = Unary();
+                return new UnaryExpr(op, right);
+            }
+            return Primary();
+        }
+
         private ASTnode LevelTwo()
         {
             var node = Unary();
-            if (Current().Type == TokenType.Pow)
+            while (Eat(TokenType.Pow))
             {
-                Token op = Current();
-                Eat(Current(), TokenType.Pow);
-                var right = Unary();
+                Token op = Previous();
+                ASTnode right = LevelTwo();
                 node = new BinOp(node, op, right);
             }
             return node;
         }
-        private ASTnode LevelThree()
+
+        private ASTnode LevelThree() // factor
         {
             var node = LevelTwo();
 
-            while (Current().Type == TokenType.Product || Current().Type == TokenType.Division || Current().Type == TokenType.Modulo)
-            {
-                Token op = Current();
-                if (Current().Type == TokenType.Product)
-                {
-                    Eat(Current(), TokenType.Product);
-                }
-                else if (Current().Type == TokenType.Division)
-                {
-                    Eat(Current(), TokenType.Division);
-                }
-                else if (Current().Type == TokenType.Modulo)
-                {
-                    Eat(Current(), TokenType.Modulo);
-                }
-
-                node = new BinOp(node, op, LevelTwo());
-            }
-            return node;
-        }
-
-        private ASTnode LevelFour()
-        {
-            var node = LevelThree();
-
-            while (Current().Type == TokenType.Sum || Current().Type == TokenType.Subtraction)
-            {
-                Token op = Current();
-                if (Current().Type == TokenType.Sum)
-                {
-                    Eat(Current(), TokenType.Sum);
-                }
-                else if (Current().Type == TokenType.Subtraction)
-                {
-                    Eat(Current(), TokenType.Subtraction);
-                }
-
-                node = new BinOp(node, op, LevelThree());
-            }
-            return node;
-        }
-
-        private ASTnode Unary()
-        {
-            if (Current().Type == TokenType.Subtraction)
-            {
-                Advance();
-                Token op = Previous();
-                return new UnaryExpr(op, Unary());
-            }
-            return Call(); ;
-        }
-
-        private ASTnode Call()
-        {
-            ASTnode expr = Primary();
-
-            while (true)
-            {
-                if (Current().Type == TokenType.OpParenthesis)
-                {
-                    Eat(Current(), TokenType.OpParenthesis);
-                    expr = FinishCall(expr);
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            return expr;
-        }
-
-        private ASTnode FinishCall(ASTnode callee)
-        {
-            List<ASTnode> arguments = new List<ASTnode>();
-            if (!Check(TokenType.ClParenthesis))
-            {
-                do
-                {
-                    arguments.Add(Expr());
-                } while (Eat(Current(), TokenType.Comma));
-            }
-
-            Token paren = Consume(TokenType.ClParenthesis, "Expect ')' after arguments.");
-
-            return new CallFunction(callee, paren, arguments);
-        }
-
-        // private Stmt Function()
-        // {
-        //     Token name = Consume(TokenType.Identifier, "Expect function name.");
-        //     Consume(TokenType.OpParenthesis, "Expect '(' after function name.");
-        //     List<Token> parameters = new List<Token>();
-        //     if (!Check(TokenType.ClParenthesis))
-        //     {
-        //         do
-        //         {
-        //             parameters.Add(Consume(TokenType.Identifier, "Expect parameter name."));
-        //         }
-        //         while (Eat(Current(), TokenType.Comma));
-        //     }
-        //     Consume(TokenType.ClParenthesis, "Expect ')' after parameters.");
-        //     Consume(TokenType.Imply, "Expect '=>' after function declaration.");
-        //     List<Stmt> body_function = new List<Stmt>();
-
-        // }
-
-        // private Stmt LetStmt()
-        // {
-        //     ASTnode LetExpr = VarDeclaration();
-
-        // }
-
-
-        private ASTnode Equality()
-        {
-            var node = Comparison();
-            while (Current().Type == TokenType.Equality || Current().Type == TokenType.NotEqual)
+            while (Eat(TokenType.Product) || Eat(TokenType.Division) || Eat(TokenType.Modulo))
             {
                 Token op = Previous();
-                if (Current().Type == TokenType.Equality)
-                {
-                    Eat(Current(), TokenType.Equality);
-                }
-                else if (Current().Type == TokenType.NotEqual)
-                {
-                    Eat(Current(), TokenType.NotEqual);
-                }
-
-                node = new BinOp(node, op, Comparison());
-
+                ASTnode right = LevelTwo();
+                node = new BinOp(node, op, right);
             }
             return node;
         }
 
-        private ASTnode Comparison()
+        private ASTnode LevelFour() //term
         {
-            ASTnode node = LevelFour();
-            while (Current().Type == TokenType.LessThan || Current().Type == TokenType.LessOrEqual || Current().Type == TokenType.GreaterThan || Current().Type == TokenType.GreaterOrEqual)
+            ASTnode node = LevelThree();
+
+            while (Eat(TokenType.Sum) || Eat(TokenType.Subtraction))
             {
                 Token op = Previous();
-                if (Current().Type == TokenType.LessThan)
-                {
-                    Eat(Current(), TokenType.LessThan);
-                }
-                else if (Current().Type == TokenType.LessOrEqual)
-                {
-                    Eat(Current(), TokenType.LessOrEqual);
-                }
-                else if (Current().Type == TokenType.GreaterThan)
-                {
-                    Eat(Current(), TokenType.GreaterThan);
-                }
-                else if (Current().Type == TokenType.GreaterOrEqual)
-                {
-                    Eat(Current(), TokenType.GreaterOrEqual);
-                }
-                node = new BinOp(node, op, LevelFour());
+                ASTnode right = LevelThree();
+                node = new BinOp(node, op, right);
             }
             return node;
-        }
-
-
-        private Stmt Statement()
-        {
-
-            if (Current().Type == TokenType.If)
-            {
-                Eat(Current(), TokenType.If); return IfStatement();
-            }
-            else if (Current().Type == TokenType.Print)
-            {
-                Eat(Current(), TokenType.Print); return PrintStatement();
-            }
-            // else if (Current().Type == TokenType.Let)
-            // {
-            //     Eat(Current(), TokenType.Let); return LetStmt();
-            // }
-            // else if (Current().Type == TokenType.Function)
-            // {
-            //     Eat(Current(), TokenType.Function); return Function();
-            // }
-
-            return ExpressionStatement();
-        }
-
-        private Stmt PrintStatement()
-        {
-            Consume(TokenType.OpParenthesis, "Expect '(' after expression");
-            ASTnode value = Expr();
-            Consume(TokenType.ClParenthesis, "Expect ')' after value");
-            Consume(TokenType.Semicolon, "Expect ';' after expression.");
-            return new Print(value);
-        }
-
-        private ASTnode Expr()
-        {
-            return Assignment();
-        }
-
-        private Stmt ExpressionStatement()
-        {
-            ASTnode expr = Expr();
-            Consume(TokenType.Semicolon, "Expect ';' after expression.");
-            return new ExpressionStmt(expr);
-        }
-
-        // private Stmt Declaration()
-        // {
-        //     if (Current().Type == TokenType.Identifier)
-        //     {
-        //         Eat(Current(), TokenType.Identifier);
-        //         return VarDeclaration();
-        //     }
-        //     return Statement();
-        // }
-
-        // private Stmt VarDeclaration()
-        // {
-        //     Token name = Consume(TokenType.Identifier, "Expect variable name.");
-        //     ASTnode initializer = null;
-
-        //     if (Eat(Current(), TokenType.Assignment))
-        //     {
-        //         initializer = Expr();
-        //     }
-        //     else
-        //     {
-        //         throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Previous().Lexeme + "'", "Expect '=' after variable name");
-        //     }
-        //     List<ASTnode> declarations = new List<ASTnode>
-        //     {
-        //         initializer
-        //     };
-        //     if (Eat(Current(), TokenType.Comma))
-        //     {
-        //         Stmt other_initializer = VarDeclaration();
-        //     }
-        //     else
-        //     {
-        //         return 
-        //     }
-        //     Consume(TokenType.In, "Expect 'in' expression after variable declaration");
-
-        // }
-
-        // private Stmt FinishDeclaration()
-        // {
-
-        // }
-
-        private ASTnode Assignment()
-        {
-            ASTnode expr = Or();
-
-            if (Current().Type == TokenType.Assignment)
-            {
-                Token equals = Previous();
-                ASTnode value = Assignment();
-
-                if (expr is Variable)
-                {
-                    Token name = ((Variable)expr).Name;
-                    return new Assignment(name.Lexeme, value);
-                }
-
-                throw Error.Error_(equals.Line, Error.ErrorType.SINTACTIC, "", "Invalid assignment target.");
-            }
-
-            return expr;
-
         }
 
         private ASTnode Or()
         {
             ASTnode expr = And();
 
-            while (Current().Type == TokenType.Disjunction)
+            while (Eat(TokenType.Disjunction))
             {
                 Token op = Previous();
                 ASTnode right = And();
@@ -368,9 +124,8 @@ namespace Hulk
         {
             ASTnode expr = Equality();
 
-            while (Current().Type == TokenType.Conjunction)
+            while (Eat(TokenType.Conjunction))
             {
-                Eat(Current(), TokenType.Conjunction);
                 Token op = Previous();
                 ASTnode right = Equality();
                 expr = new Logical(expr, op, right);
@@ -379,28 +134,130 @@ namespace Hulk
             return expr;
         }
 
-        private Stmt IfStatement()
+        private ASTnode Equality()
+        {
+            ASTnode node = Comparison();
+            while (Eat(TokenType.Equality) || Eat(TokenType.NotEqual))
+            {
+                Token op = Previous();
+                ASTnode right = Comparison();
+                node = new BinOp(node, op, right);
+
+            }
+            return node;
+        }
+
+        private ASTnode Comparison()
+        {
+            ASTnode node = Concat(); //concat
+            while (Eat(TokenType.LessThan) || Eat(TokenType.LessOrEqual) || Eat(TokenType.GreaterThan) || Eat(TokenType.GreaterOrEqual))
+            {
+                Token op = Previous();
+                ASTnode right = LevelFour(); //concat
+                node = new BinOp(node, op, right);
+            }
+            return node;
+        }
+
+        private ASTnode Concat()
+        {
+            ASTnode node = LevelFour();
+            while (Eat(TokenType.Concat))
+            {
+                Token op = Previous();
+                node = new BinOp(node, op, LevelFour());
+            }
+            return node;
+        }
+
+
+        private ASTnode Statement()
+        {
+
+            if (Eat(TokenType.If))
+            {
+                return IfStatement();
+            }
+            else if (Eat(TokenType.Print))
+            {
+                return PrintStatement();
+            }
+            else if (Eat(TokenType.Let))
+            {
+                return LetStatement();
+            }
+            return ExpressionStatement();
+        }
+
+        private ASTnode PrintStatement()
+        {
+            Consume(TokenType.OpParenthesis, "Expect '(' after expression");
+            ASTnode value = Expr();
+            Consume(TokenType.ClParenthesis, "Expect ')' after value");
+            return new Print(value);
+        }
+
+        private ASTnode Expr()
+        {
+            return Or();
+        }
+
+        private ASTnode ExpressionStatement()
+        {
+            ASTnode expr = Expr();
+            return new ExpressionStmt(expr);
+        }
+
+
+
+        private ASTnode IfStatement()
         {
             Consume(TokenType.OpParenthesis, "Expect '(' after 'if'.");
             ASTnode condition = Expr();
             Consume(TokenType.ClParenthesis, "Expect ')' after if condition.");
 
-            Stmt then_body = Statement();
-            Stmt else_body = null;
-
-            if (Current().Type == TokenType.Else)
-            {
-                Eat(Current(), TokenType.Else);
-                else_body = Statement();
-            }
-            else
-            {
-                throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "", "Expect 'else declaration' after if condition");
-            }
+            ASTnode then_body = Statement();
+            Consume(TokenType.Else, "Expect 'else declaration' after if condition");
+            ASTnode else_body = Statement();
 
             return new IfStmt(condition, then_body, else_body);
         }
 
+        private ASTnode LetStatement()
+        {
+            List<Assignment> let_declarations = Assignment();
+            Consume(TokenType.In, " Expected 'in' after let statement");
+
+            ASTnode in_body = Statement();
+            return new LetStmt(let_declarations, in_body);
+
+        }
+
+        private List<Assignment> Assignment()
+        {
+            List<Assignment> let_declarations = new List<Assignment>();
+
+            while (!Eat(TokenType.In))
+            {
+                string name = Consume(TokenType.Identifier, "Invalid assignment target.").Lexeme;
+                Consume(TokenType.Assignment, "Expect '=' after variable name");
+                ASTnode right = Expr();
+
+                if (!Eat(TokenType.In))
+                {
+                    Consume(TokenType.Comma, "Expect 'in' or ',' after expression ");
+                    if (Eat(TokenType.In))
+                    {
+                        throw Error.Error_(Previous().Line, Error.ErrorType.SINTACTIC, "at '" + Previous().Lexeme + "'", "Invalid token 'in' after ','");
+                    }
+                }
+
+                let_declarations.Add(new Hulk.Assignment(name, right));
+            }
+
+            return let_declarations;
+
+        }
         private Token Current()
         {
             return Tokenized.Tokens[position];
@@ -423,11 +280,11 @@ namespace Hulk
             return false;
         }
 
-        private bool Eat(Token current, TokenType type)
+        private bool Eat(TokenType type)
         {
-            if (current.Type == type)
+            if (Check(type))
             {
-                Advance();
+                position++;
                 return true;
             }
             else return false;

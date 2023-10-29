@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 
 namespace Hulk
 {
-    public class ExpressionStmt: Stmt
+    public class ExpressionStmt: ASTnode
     {
         public ASTnode expression { get; private set; }
         public ExpressionStmt(ASTnode expr)
@@ -10,7 +10,7 @@ namespace Hulk
             this.expression = expr;
         }
 
-        public override R Accept<R>(IVisitor<R> visitor)
+        public override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.Visit(this);
         }

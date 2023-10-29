@@ -17,25 +17,17 @@ namespace Hulk
             T Visit(CallFunction _call);
             T Visit(Logical _logical);
             T Visit(Variable _var);
+            T Visit(MathExpr _value);
+
+            T Visit(FunctionStmt _stmt);
+            T Visit(IfStmt _stmt);
+            T Visit(Print _print);
+            T Visit(ExpressionStmt _stmt);
+            T Visit(LetStmt _let);
 
         }
         public abstract T Accept<T>(IVisitor<T> visitor);
     }
 
-    public abstract class Stmt
-    {
-        public interface IVisitor<R> 
-        {
-            R Visit(FunctionStmt _stmt);
-            R Visit(IfStmt _stmt);
-            R Visit(Print _print);
-            R Visit(VariableStmt _stmt);
-            R Visit(ExpressionStmt _stmt);
-            R Visit(Let _let);
-
-        }  
-            public abstract R Accept<R>(IVisitor<R> visitor);
-    }
-            
 
 }

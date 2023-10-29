@@ -1,19 +1,19 @@
 namespace Hulk
 {
-    public class IfStmt: Stmt
+    public class IfStmt: ASTnode
     {
         public ASTnode Condition { get; private set; }
-        public Stmt ThenBody { get; private set; }
-        public Stmt ElseBody { get; private set; }
+        public ASTnode ThenBody { get; private set; }
+        public ASTnode ElseBody { get; private set; }
 
-        public IfStmt(ASTnode condition, Stmt then_body, Stmt else_body)
+        public IfStmt(ASTnode condition, ASTnode then_body, ASTnode else_body)
         {
             Condition = condition;
             ThenBody = then_body;
             ElseBody = else_body;
         }
 
-        public override R Accept<R>(IVisitor<R> visitor)
+        public override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.Visit(this);
         }

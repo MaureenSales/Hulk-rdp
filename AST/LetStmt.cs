@@ -1,23 +1,14 @@
 namespace Hulk
 {
-    public class Let: Stmt
+    public class LetStmt: ASTnode
     {
-        public List<ASTnode> Declarations { get; private set; }
-        public List<ASTnode> Body { get; private set; }
+        public List<Assignment> Declarations { get; private set; }
+        public ASTnode Body { get; private set; }
 
-        public ASTnode Declaration { get; private  set; }
-        public ASTnode Body_ { get; private set; }
-
-        public Let( List<ASTnode> declarations, List<ASTnode> body)
+        public LetStmt ( List<Assignment> declaration, ASTnode body )
         {
-            Declarations = declarations;
+            Declarations = declaration;
             Body = body;
-        }
-
-        public Let ( ASTnode declaration, ASTnode body_ )
-        {
-            Declaration = declaration;
-            Body_ = body_;
         }
 
         public override T Accept<T>(IVisitor<T> visitor)
