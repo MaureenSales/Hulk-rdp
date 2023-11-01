@@ -16,7 +16,6 @@ namespace Hulk
             T Visit(Grouping _group);
             T Visit(CallFunction _call);
             T Visit(Logical _logical);
-            T Visit(Variable _var);
             T Visit(MathExpr _value);
 
             T Visit(FunctionStmt _stmt);

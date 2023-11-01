@@ -190,7 +190,6 @@ namespace Hulk
                 { "E", TokenType.Euler },
                 { "true", TokenType.True },
                 { "false", TokenType.False },
-                { "sqrt", TokenType.Sqrt },
                 { "print", TokenType.Print}
             };
 

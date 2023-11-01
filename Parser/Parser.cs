@@ -35,9 +35,6 @@ namespace Hulk
                 case TokenType.Euler:
                     position++;
                     return new MathExpr(Math.E);
-                case TokenType.Identifier:
-                    position++;
-                    return new Variable(Previous());
                 case TokenType.Number:
                     position++;
                     return new Num(Previous());
@@ -54,9 +51,30 @@ namespace Hulk
 
             }
 
-
-
         }
+
+        private ASTnode CallFunction()
+        {
+            if (Eat(TokenType.Identifier))
+            {
+                Token callee = Previous();
+                Consume(TokenType.OpParenthesis, "Expect '(' after call function ");
+                List<ASTnode> arguments = new List<ASTnode>();
+
+                if (!Check(TokenType.ClParenthesis))
+                {
+                    do
+                    {
+                        arguments.Add(Expr());
+                    }
+                    while (Eat(TokenType.Comma));
+                }
+                Token paren = Consume(TokenType.ClParenthesis, "Expect ')' after arguments");
+                return new CallFunction(callee, paren, arguments);
+            }
+            return Primary();
+        }
+
         private ASTnode Unary()
         {
             while (Eat(TokenType.Subtraction))
@@ -65,7 +83,7 @@ namespace Hulk
                 ASTnode right = Unary();
                 return new UnaryExpr(op, right);
             }
-            return Primary();
+            return CallFunction();
         }
 
         private ASTnode LevelTwo()
@@ -237,18 +255,19 @@ namespace Hulk
         {
             List<Assignment> let_declarations = new List<Assignment>();
 
-            while (!Eat(TokenType.In))
+            while (Current().Type != TokenType.In)
             {
-                string name = Consume(TokenType.Identifier, "Invalid assignment target.").Lexeme;
+                string name = Current().Lexeme; Eat(TokenType.Identifier);//Consume(TokenType.Identifier, "Invalid assignment target.").Lexeme;
                 Consume(TokenType.Assignment, "Expect '=' after variable name");
                 ASTnode right = Expr();
 
-                if (!Eat(TokenType.In))
+                if (Current().Type != TokenType.In)
                 {
                     Consume(TokenType.Comma, "Expect 'in' or ',' after expression ");
-                    if (Eat(TokenType.In))
+
+                    if (Check(TokenType.In))
                     {
-                        throw Error.Error_(Previous().Line, Error.ErrorType.SINTACTIC, "at '" + Previous().Lexeme + "'", "Invalid token 'in' after ','");
+                        Consume(TokenType.In, " Invalid token 'in' after ',' ");
                     }
                 }
 
@@ -258,6 +277,32 @@ namespace Hulk
             return let_declarations;
 
         }
+
+        private ASTnode Function()
+        {
+            if (Eat(TokenType.Function))
+            {
+                string function_name = Consume(TokenType.Identifier, "Expect function name after 'function'").Lexeme;
+                Consume(TokenType.OpParenthesis, "Expect '(' after function name.");
+                List<object> parameters = new List<object>();
+
+                if (!Check(TokenType.ClParenthesis))
+                {
+                    do
+                    {
+                        parameters.Add(Consume(TokenType.Identifier, "Expect parameter name."));
+                    }
+                    while(Eat(TokenType.Comma));
+                }
+                
+                Consume(TokenType.ClParenthesis, "Missing ')' after the function parameters");
+                Consume(TokenType.Imply, " Expect '=>' after function declaration");
+
+                ASTnode body = Statement();
+
+            }
+        }
+
         private Token Current()
         {
             return Tokenized.Tokens[position];
@@ -303,3 +348,4 @@ namespace Hulk
     }
 
 }
+

@@ -162,7 +162,41 @@ namespace Hulk
 
         public object Visit(CallFunction expr)
         {
-            throw new NotImplementedException();
+
+            if(!Function.FunctionDeclaration(expr.Callee.Lexeme))
+            {
+                throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Non defined function");
+            }
+            if(!Function.FunctionArity(expr.Callee.Lexeme,expr.Arguments.Count ))
+            {
+                throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Incorrect amount of parameters");
+            }
+            //
+
+            List<object> arguments = new List<object>();
+            foreach (var item in expr.Arguments)
+            {
+                arguments.Add(evaluate(item));
+            }
+
+            switch (expr.Callee.Lexeme)
+            {
+                case "rand":
+                    Random result = new Random();
+                    return result.NextDouble();
+                case "cos":
+                    return (double)Math.Cos((double)arguments[0]);
+                case "sin":
+                    return (double)Math.Sin((double)arguments[0]);
+                case "sqrt":
+                    return (double)Math.Sqrt((double)arguments[0]);
+                case "log":
+                    return (double)Math.Log((double)arguments[1], (double)arguments[0]);
+                default:
+                    throw new NotImplementedException();
+            }
+            //
+
         }
         public object Visit(LetStmt _let)
         {
@@ -171,11 +205,6 @@ namespace Hulk
                 evaluate(item);
             }
             return evaluate(_let.Body);
-        }
-
-        public object Visit(Variable _var)
-        {
-            throw new NotImplementedException();
         }
 
         public object Visit(FunctionStmt _stmt)

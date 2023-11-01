@@ -1,16 +1,17 @@
+using System.Reflection.Emit;
 namespace Hulk
 {
     public class CallFunction: ASTnode
     {
-        public ASTnode Callee { get; private set; }
+        public Token Callee { get; private set; }
         public Token Paren { get; private set; }
-        public List<ASTnode> Parameters { get; private set; }
+        public List<ASTnode> Arguments { get; private set; }
 
-        public CallFunction( ASTnode callee, Token paren, List<ASTnode> parameters)
+        public CallFunction( Token callee, Token paren, List<ASTnode> arguments)
         {
             Callee = callee;
             Paren = paren;
-            Parameters = parameters;
+            Arguments = arguments;
         }
 
         public override T Accept<T>(IVisitor<T> visitor)

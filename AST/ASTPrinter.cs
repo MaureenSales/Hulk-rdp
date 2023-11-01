@@ -78,11 +78,6 @@ namespace Hulk
             return $"( {Print(_logical.Left)}  {_logical.Operator.Lexeme}  {Print(_logical.Right)} ) ";
         }
 
-        public string Visit(Variable _var)
-        {
-            throw new NotImplementedException();
-        }
-
         string Visit(FunctionStmt _stmt)
         {
             throw new NotImplementedException();
