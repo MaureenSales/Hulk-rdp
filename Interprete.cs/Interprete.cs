@@ -1,7 +1,46 @@
+using System.Security.Cryptography.X509Certificates;
+
 namespace Hulk
 {
     public class Interprete : ASTnode.IVisitor<object>
     {
+        public static Dictionary<string, FunctionStmt> functions;
+        public Stack<Dictionary<string, object>> VariableScopes;
+
+        public Interprete()
+        {
+            System.Console.WriteLine("constructor");
+            functions = new();
+            VariableScopes = new();
+            EnterScope();
+        }
+
+        public void EnterScope()
+        {
+            System.Console.WriteLine("entrando al scope");
+            VariableScopes.Push(new Dictionary<string, object>());
+        }
+
+        public void ExitScope()
+        {
+            System.Console.WriteLine("saliendo del scope");
+            VariableScopes.Pop();
+        }
+
+        public object FindVariable(string name)
+        {
+            foreach (var item in VariableScopes)
+            {
+                if (item.ContainsKey(name))
+                {
+                    var x = item[name];
+                    return x;
+                }
+
+            }
+            return Error.Error_(1, Error.ErrorType.SEMANTIC, "", "Variable no declarada");
+        }
+
         public object evaluate(ASTnode expr)
         {
             return expr.Accept(this);
@@ -9,6 +48,7 @@ namespace Hulk
 
         public object Visit(Num num)
         {
+            System.Console.WriteLine(num.Value + "is visited");
             return num.Value;
         }
         public object Visit(String_ string_)
@@ -39,8 +79,8 @@ namespace Hulk
 
         public object Visit(ExpressionStmt stmt)
         {
-            evaluate(stmt.expression);
-            return null;
+            object result = evaluate(stmt.expression);
+            return result;
         }
 
         public object Visit(UnaryExpr expr)
@@ -83,6 +123,9 @@ namespace Hulk
                     CheckNumberOperands(expr.Op, left, right);
                     return (double)left - (double)right;
                 case TokenType.Sum:
+                    System.Console.WriteLine(left + "algo");
+                    System.Console.WriteLine(right);
+
                     if (left is Double && right is Double)
                     {
                         return (double)left + (double)right;
@@ -137,21 +180,28 @@ namespace Hulk
 
         public object Visit(Assignment expr)
         {
+
             object value = evaluate(expr.Value);
+            System.Console.WriteLine("count de la pila " + VariableScopes.Count);
+            VariableScopes.Peek().Add(expr.Name, value);
             return value;
         }
 
         public object Visit(IfStmt stmt)
         {
+            object result = null;
             if (IsTruthy(evaluate(stmt.Condition)))
             {
-                evaluate(stmt.ThenBody);
+                System.Console.WriteLine(result + "hi");
+                System.Console.WriteLine(stmt.ThenBody);
+                result = evaluate(stmt.ThenBody);
+                System.Console.WriteLine(result + "hello");
             }
             else if (stmt.ElseBody != null)
             {
-                evaluate(stmt.ElseBody);
+                result = evaluate(stmt.ElseBody);
             }
-            return null;
+            return result;
         }
 
 
@@ -163,53 +213,84 @@ namespace Hulk
         public object Visit(CallFunction expr)
         {
 
-            if(!Function.FunctionDeclaration(expr.Callee.Lexeme))
+            if (!functions.ContainsKey(expr.Callee.Lexeme))
             {
                 throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Non defined function");
             }
-            if(!Function.FunctionArity(expr.Callee.Lexeme,expr.Arguments.Count ))
+            else
             {
-                throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Incorrect amount of parameters");
-            }
-            //
+                FunctionStmt fun = functions[expr.Callee.Lexeme];
+                EnterScope();
+                if (fun.Params.Count != expr.Arguments.Count)
+                {
+                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Incorrect amount of parameters");
+                }
+                else 
+                {
+                    for (int i = 0; i < fun.Params.Count; i++)
+                    {
+                        fun.Params[i].Value = expr.Arguments[i];
+                    }
 
-            List<object> arguments = new List<object>();
-            foreach (var item in expr.Arguments)
-            {
-                arguments.Add(evaluate(item));
+
+                    foreach (var item in fun.Params)
+                    {
+                        evaluate(item);
+                    }
+
+                    object result = evaluate(fun.Body);
+                    ExitScope();
+                    return result;
+                }
             }
 
-            switch (expr.Callee.Lexeme)
-            {
-                case "rand":
-                    Random result = new Random();
-                    return result.NextDouble();
-                case "cos":
-                    return (double)Math.Cos((double)arguments[0]);
-                case "sin":
-                    return (double)Math.Sin((double)arguments[0]);
-                case "sqrt":
-                    return (double)Math.Sqrt((double)arguments[0]);
-                case "log":
-                    return (double)Math.Log((double)arguments[1], (double)arguments[0]);
-                default:
-                    throw new NotImplementedException();
-            }
-            //
+            // switch (expr.Callee.Lexeme)
+            // {
+            //     case "rand":
+            //         Random result = new Random();
+            //         return result.NextDouble();
+            //     case "cos":
+            //         return (double)Math.Cos((double)arguments[0]);
+            //     case "sin":
+            //         return (double)Math.Sin((double)arguments[0]);
+            //     case "sqrt":
+            //         return (double)Math.Sqrt((double)arguments[0]);
+            //     case "log":
+            //         return (double)Math.Log((double)arguments[1], (double)arguments[0]);
+            //     default:
+            //         throw new NotImplementedException();
+            // }
+            // //
 
         }
         public object Visit(LetStmt _let)
         {
+            EnterScope();
             foreach (var item in _let.Declarations)
             {
                 evaluate(item);
             }
-            return evaluate(_let.Body);
+
+            object value = evaluate(_let.Body);
+            ExitScope();
+            return value;
+        }
+        public object Visit(VariableReference _reference)
+        {
+            return FindVariable(_reference.Name);
         }
 
         public object Visit(FunctionStmt _stmt)
         {
-            throw new NotImplementedException();
+            if (!functions.ContainsKey(_stmt.Name))
+            {
+                functions.Add(_stmt.Name, _stmt);
+            }
+            else
+            {
+                throw Error.Error_(1, Error.ErrorType.SEMANTIC, "", "Already defined function");
+            }
+            return null;
         }
 
         public object Visit(MathExpr _value)

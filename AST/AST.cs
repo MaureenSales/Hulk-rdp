@@ -23,6 +23,7 @@ namespace Hulk
             T Visit(Print _print);
             T Visit(ExpressionStmt _stmt);
             T Visit(LetStmt _let);
+            T Visit(VariableReference _reference);
 
         }
         public abstract T Accept<T>(IVisitor<T> visitor);

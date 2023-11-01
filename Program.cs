@@ -8,6 +8,7 @@ namespace Hulk
         {
             Console.BackgroundColor = ConsoleColor.Gray;
             Console.Clear();
+            Interprete interprete = new Interprete();
             while (true)
             {
                 Console.ForegroundColor = ConsoleColor.Magenta;
@@ -15,6 +16,7 @@ namespace Hulk
                 Console.ForegroundColor = ConsoleColor.White;
                 string input = Console.ReadLine();
                 if (input == "exit") break;
+
                 try
                 {
                     Lexer lexer = new Lexer(input);
@@ -22,7 +24,7 @@ namespace Hulk
                     List<ASTnode> stmts = parser.Parse();
                     // AstPrinter p = new AstPrinter();
                     // foreach(ASTnode s in stmts)p.Print_(s);
-                    Interprete interprete = new Interprete();
+                    
                     foreach(ASTnode stmt in stmts)interprete.evaluate(stmt);
                 }
                 catch (System.Exception e)

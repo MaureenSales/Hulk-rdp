@@ -41,13 +41,27 @@ namespace Hulk
                 case TokenType.String:
                     position++;
                     return new String_(Previous().Lexeme);
+                case TokenType.Identifier:
+                    string name = Current().Lexeme;
+                    position++;
+                    if (Current().Type == TokenType.OpParenthesis)
+                    {
+                        return CallFunction();
+                    }
+                    else return new VariableReference(name);
                 case TokenType.OpParenthesis:
                     position++;
                     var node = LevelFour();
                     Consume(TokenType.ClParenthesis, "Expect ')' after expression.");
                     return new Grouping(node);
+                case TokenType.If:
+                    position++;
+                    return IfStatement();
 
-                default: throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Missing left-hand or right-hand operand.");
+                default:
+                    System.Console.WriteLine(Current().Lexeme);
+
+                    throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Missing left-hand or right-hand operand.");
 
             }
 
@@ -55,24 +69,21 @@ namespace Hulk
 
         private ASTnode CallFunction()
         {
-            if (Eat(TokenType.Identifier))
-            {
-                Token callee = Previous();
-                Consume(TokenType.OpParenthesis, "Expect '(' after call function ");
-                List<ASTnode> arguments = new List<ASTnode>();
+            Token callee = Previous();
+            Consume(TokenType.OpParenthesis, "Expect '(' after call function ");
+            List<ASTnode> arguments = new List<ASTnode>();
 
-                if (!Check(TokenType.ClParenthesis))
+            if (!Check(TokenType.ClParenthesis))
+            {
+                do
                 {
-                    do
-                    {
-                        arguments.Add(Expr());
-                    }
-                    while (Eat(TokenType.Comma));
+                    arguments.Add(Expr());
                 }
-                Token paren = Consume(TokenType.ClParenthesis, "Expect ')' after arguments");
-                return new CallFunction(callee, paren, arguments);
+                while (Eat(TokenType.Comma));
             }
-            return Primary();
+
+            Token paren = Consume(TokenType.ClParenthesis, "Expect ')' after arguments");
+            return new CallFunction(callee, paren, arguments);
         }
 
         private ASTnode Unary()
@@ -83,7 +94,7 @@ namespace Hulk
                 ASTnode right = Unary();
                 return new UnaryExpr(op, right);
             }
-            return CallFunction();
+            return Primary();
         }
 
         private ASTnode LevelTwo()
@@ -192,17 +203,17 @@ namespace Hulk
         private ASTnode Statement()
         {
 
-            if (Eat(TokenType.If))
-            {
-                return IfStatement();
-            }
-            else if (Eat(TokenType.Print))
+            if (Eat(TokenType.Print))
             {
                 return PrintStatement();
             }
             else if (Eat(TokenType.Let))
             {
                 return LetStatement();
+            }
+            else if (Eat(TokenType.Function))
+            {
+                return Function();
             }
             return ExpressionStatement();
         }
@@ -280,27 +291,27 @@ namespace Hulk
 
         private ASTnode Function()
         {
-            if (Eat(TokenType.Function))
+            string function_name = Consume(TokenType.Identifier, "Expect function name after 'function'").Lexeme;
+            Consume(TokenType.OpParenthesis, "Expect '(' after function name.");
+            List<Assignment> parameters = new List<Assignment>();
+
+            if (!Check(TokenType.ClParenthesis))
             {
-                string function_name = Consume(TokenType.Identifier, "Expect function name after 'function'").Lexeme;
-                Consume(TokenType.OpParenthesis, "Expect '(' after function name.");
-                List<object> parameters = new List<object>();
-
-                if (!Check(TokenType.ClParenthesis))
+                do
                 {
-                    do
-                    {
-                        parameters.Add(Consume(TokenType.Identifier, "Expect parameter name."));
-                    }
-                    while(Eat(TokenType.Comma));
+                    string name = Consume(TokenType.Identifier, "Expect parameter name.").Lexeme;
+                    parameters.Add(new Hulk.Assignment(name, null));
                 }
-                
-                Consume(TokenType.ClParenthesis, "Missing ')' after the function parameters");
-                Consume(TokenType.Imply, " Expect '=>' after function declaration");
-
-                ASTnode body = Statement();
-
+                while (Eat(TokenType.Comma));
             }
+
+            Consume(TokenType.ClParenthesis, "Missing ')' after the function parameters");
+            Consume(TokenType.Imply, " Expect '=>' after function declaration");
+
+            ASTnode body = Statement();
+
+            return new FunctionStmt(function_name, parameters, body);
+
         }
 
         private Token Current()

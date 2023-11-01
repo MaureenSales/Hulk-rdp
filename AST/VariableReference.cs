@@ -1,14 +1,12 @@
 namespace Hulk
 {
-    public class Assignment: ASTnode
+    public class VariableReference : ASTnode
     {
         public string Name { get; private set; }
-        public ASTnode? Value { get; set; }
 
-        public Assignment (string name, ASTnode value)
+        public VariableReference(string name)
         {
             Name = name;
-            Value = value;
         }
 
         public override T Accept<T>(IVisitor<T> visitor)

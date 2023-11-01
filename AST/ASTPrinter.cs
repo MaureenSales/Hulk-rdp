@@ -94,5 +94,10 @@ namespace Hulk
         {
             throw new NotImplementedException();
         }
+
+        public string Visit(VariableReference _reference)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
