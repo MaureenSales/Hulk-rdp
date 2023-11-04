@@ -9,7 +9,6 @@ namespace Hulk
 
         public Interprete()
         {
-            System.Console.WriteLine("constructor");
             functions = new();
             VariableScopes = new();
             EnterScope();
@@ -17,13 +16,11 @@ namespace Hulk
 
         public void EnterScope()
         {
-            System.Console.WriteLine("entrando al scope");
             VariableScopes.Push(new Dictionary<string, object>());
         }
 
         public void ExitScope()
         {
-            System.Console.WriteLine("saliendo del scope");
             VariableScopes.Pop();
         }
 
@@ -48,7 +45,6 @@ namespace Hulk
 
         public object Visit(Num num)
         {
-            System.Console.WriteLine(num.Value + "is visited");
             return num.Value;
         }
         public object Visit(String_ string_)
@@ -74,7 +70,7 @@ namespace Hulk
 
         public object Visit(Grouping expr)
         {
-            return expr.Expression;
+            return evaluate(expr.Expression);
         }
 
         public object Visit(ExpressionStmt stmt)
@@ -94,7 +90,7 @@ namespace Hulk
                     return -(double)right;
             }
 
-            return null;
+            return right;
         }
 
 
@@ -102,6 +98,7 @@ namespace Hulk
         {
             object left = evaluate(expr.Left);
             object right = evaluate(expr.Right);
+
 
             switch (expr.Op.Type)
             {
@@ -123,17 +120,15 @@ namespace Hulk
                     CheckNumberOperands(expr.Op, left, right);
                     return (double)left - (double)right;
                 case TokenType.Sum:
-                    System.Console.WriteLine(left + "algo");
-                    System.Console.WriteLine(right);
 
-                    if (left is Double && right is Double)
+                    if (left is double && right is double)
                     {
                         return (double)left + (double)right;
                     }
 
-                    if (left is String && right is String)
+                    if (left is string && right is string)
                     {
-                        return (String)left + (String)right;
+                        return (string)left + (string)right;
                     }
                     throw Error.Error_(expr.Op.Line, Error.ErrorType.SEMANTIC, "", "Operands must be two numbers or two strings.");
                 case TokenType.Division:
@@ -182,7 +177,6 @@ namespace Hulk
         {
 
             object value = evaluate(expr.Value);
-            System.Console.WriteLine("count de la pila " + VariableScopes.Count);
             VariableScopes.Peek().Add(expr.Name, value);
             return value;
         }
@@ -192,10 +186,7 @@ namespace Hulk
             object result = null;
             if (IsTruthy(evaluate(stmt.Condition)))
             {
-                System.Console.WriteLine(result + "hi");
-                System.Console.WriteLine(stmt.ThenBody);
                 result = evaluate(stmt.ThenBody);
-                System.Console.WriteLine(result + "hello");
             }
             else if (stmt.ElseBody != null)
             {
@@ -213,19 +204,118 @@ namespace Hulk
         public object Visit(CallFunction expr)
         {
 
-            if (!functions.ContainsKey(expr.Callee.Lexeme))
+            if (expr.Callee.Lexeme == "sin")
+            {
+                if (expr.Arguments.Count > 1)
+                {
+                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion sin(x) receive a argument");
+                }
+                else
+                {
+                    var argument = evaluate(expr.Arguments[0]);
+                    if (argument is double)
+                    {
+                        return Math.Sin((double)argument);
+                    }
+                    else
+                    {
+                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function sin(x) receive a double not a" + argument.GetType());
+                    }
+                }
+
+            }
+            else if (expr.Callee.Lexeme == "cos")
+            {
+                if (expr.Arguments.Count > 1)
+                {
+                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion cos(x) receive a argument");
+                }
+                else
+                {
+                    var argument = evaluate(expr.Arguments[0]);
+                    if (argument is double)
+                    {
+                        return Math.Cos((double)argument);
+                    }
+                    else
+                    {
+                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function cos(x) receive a double not a" + argument.GetType());
+                    }
+                }
+            }
+            else if (expr.Callee.Lexeme == "tan")
+            {
+                if (expr.Arguments.Count > 1)
+                {
+                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion sin(x) receive a argument");
+                }
+                else
+                {
+                    var argument = evaluate(expr.Arguments[0]);
+                    if (argument is double)
+                    {
+                        return Math.Tan((double)argument);
+                    }
+                    else
+                    {
+                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function tan(x) receive a double not a" + argument.GetType());
+                    }
+                }
+            }
+            else if (expr.Callee.Lexeme == "sqrt")
+            {
+                if (expr.Arguments.Count > 1)
+                {
+                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion sqrt(x) receive a argument");
+                }
+                else
+                {
+                    var argument = evaluate(expr.Arguments[0]);
+                    if (argument is double)
+                    {
+                        return Math.Sqrt((double)argument);
+                    }
+                    else
+                    {
+                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function sqrt(x) receive a double not a" + argument.GetType());
+                    }
+                }
+            }
+            else if (expr.Callee.Lexeme == "log")
+            {
+                if (expr.Arguments.Count > 2)
+                {
+                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion log(x) receive two argument");
+                }
+                else
+                {
+                    var argument1 = evaluate(expr.Arguments[0]);
+                    var argument2 = evaluate(expr.Arguments[1]);
+                    if (argument1 is double && argument2 is double)
+                    {
+                        return Math.Log((double)argument1, (double)argument2);
+                    }
+                    else
+                    {
+                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function log(x) receive two doubles not " + argument1.GetType() + " and " + argument2.GetType());
+                    }
+                }
+            }
+
+            else if (!functions.ContainsKey(expr.Callee.Lexeme))
             {
                 throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Non defined function");
             }
             else
             {
                 FunctionStmt fun = functions[expr.Callee.Lexeme];
+
                 EnterScope();
                 if (fun.Params.Count != expr.Arguments.Count)
                 {
                     throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Incorrect amount of parameters");
                 }
-                else 
+                else
                 {
                     for (int i = 0; i < fun.Params.Count; i++)
                     {
@@ -244,24 +334,6 @@ namespace Hulk
                 }
             }
 
-            // switch (expr.Callee.Lexeme)
-            // {
-            //     case "rand":
-            //         Random result = new Random();
-            //         return result.NextDouble();
-            //     case "cos":
-            //         return (double)Math.Cos((double)arguments[0]);
-            //     case "sin":
-            //         return (double)Math.Sin((double)arguments[0]);
-            //     case "sqrt":
-            //         return (double)Math.Sqrt((double)arguments[0]);
-            //     case "log":
-            //         return (double)Math.Log((double)arguments[1], (double)arguments[0]);
-            //     default:
-            //         throw new NotImplementedException();
-            // }
-            // //
-
         }
         public object Visit(LetStmt _let)
         {
@@ -275,6 +347,7 @@ namespace Hulk
             ExitScope();
             return value;
         }
+
         public object Visit(VariableReference _reference)
         {
             return FindVariable(_reference.Name);
@@ -295,7 +368,7 @@ namespace Hulk
 
         public object Visit(MathExpr _value)
         {
-            throw new NotImplementedException();
+            return _value.Value;
         }
         private bool IsTruthy(object ob)
         {

@@ -1,3 +1,5 @@
+using System.Diagnostics.Contracts;
+
 namespace Hulk
 {
     public class Parser
@@ -7,6 +9,7 @@ namespace Hulk
         public Parser(Lexer tokenized)
         {
             Tokenized = tokenized;
+
         }
 
         public List<ASTnode> Parse()
@@ -15,6 +18,11 @@ namespace Hulk
             while (!IsAtEnd())
             {
                 statements.Add(Statement());
+            }
+            int count = Tokenized.Tokens.Count;
+            if(Tokenized.Tokens[count - 2].Type != TokenType.Semicolon)
+            {
+                throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "", "Expect ';' at end expression");
             }
             return statements;
         }
@@ -54,15 +62,52 @@ namespace Hulk
                     var node = LevelFour();
                     Consume(TokenType.ClParenthesis, "Expect ')' after expression.");
                     return new Grouping(node);
+                case TokenType.Let:
+                    position++;
+                    return LetStatement();
                 case TokenType.If:
                     position++;
                     return IfStatement();
 
                 default:
-                    System.Console.WriteLine(Current().Lexeme);
-
+                switch (Current().Type)
+                {
+                    case TokenType.Sum:
+                    case TokenType.Subtraction:
+                    case TokenType.Pow:
+                    case TokenType.Product:
+                    case TokenType.Division:
+                    case TokenType.Modulo:
+                    case TokenType.LessThan:
+                    case TokenType.LessOrEqual:
+                    case TokenType.GreaterThan:
+                    case TokenType.GreaterOrEqual:
+                    case TokenType.Concat:
+                    case TokenType.Disjunction:
+                    case TokenType.Conjunction:
+                    case TokenType.Assignment:
+                    case TokenType.Equality:
+                    case TokenType.NotEqual:
                     throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Missing left-hand or right-hand operand.");
+                    default:
+                    throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "at '" + Current().Lexeme + "'", "Unexpected character");
+                }
+                
+                    
 
+            }
+
+        }
+
+        private void Semicolon()
+        {
+            if (position != Tokenized.Tokens.Count - 2)
+            {
+                throw Error.Error_(Current().Line, Error.ErrorType.SINTACTIC, "", "Unexpected character ';', is only placed at the end expression");
+            }
+            else
+            {
+                position++;
             }
 
         }
@@ -83,6 +128,10 @@ namespace Hulk
             }
 
             Token paren = Consume(TokenType.ClParenthesis, "Expect ')' after arguments");
+            if (Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return new CallFunction(callee, paren, arguments);
         }
 
@@ -92,7 +141,15 @@ namespace Hulk
             {
                 Token op = Previous();
                 ASTnode right = Unary();
+                if (Check(TokenType.Semicolon))
+                {
+                    Semicolon();
+                }
                 return new UnaryExpr(op, right);
+            }
+            if (Check(TokenType.Semicolon))
+            {
+                Semicolon();
             }
             return Primary();
         }
@@ -104,7 +161,12 @@ namespace Hulk
             {
                 Token op = Previous();
                 ASTnode right = LevelTwo();
+
                 node = new BinOp(node, op, right);
+            }
+            if (Check(TokenType.Semicolon))
+            {
+                Semicolon();
             }
             return node;
         }
@@ -119,6 +181,10 @@ namespace Hulk
                 ASTnode right = LevelTwo();
                 node = new BinOp(node, op, right);
             }
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return node;
         }
 
@@ -131,6 +197,10 @@ namespace Hulk
                 Token op = Previous();
                 ASTnode right = LevelThree();
                 node = new BinOp(node, op, right);
+            }
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
             }
             return node;
         }
@@ -145,7 +215,10 @@ namespace Hulk
                 ASTnode right = And();
                 expr = new Logical(expr, op, right);
             }
-
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return expr;
         }
 
@@ -159,7 +232,10 @@ namespace Hulk
                 ASTnode right = Equality();
                 expr = new Logical(expr, op, right);
             }
-
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return expr;
         }
 
@@ -173,6 +249,10 @@ namespace Hulk
                 node = new BinOp(node, op, right);
 
             }
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return node;
         }
 
@@ -185,6 +265,10 @@ namespace Hulk
                 ASTnode right = LevelFour(); //concat
                 node = new BinOp(node, op, right);
             }
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return node;
         }
 
@@ -196,6 +280,10 @@ namespace Hulk
                 Token op = Previous();
                 node = new BinOp(node, op, LevelFour());
             }
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return node;
         }
 
@@ -206,10 +294,6 @@ namespace Hulk
             if (Eat(TokenType.Print))
             {
                 return PrintStatement();
-            }
-            else if (Eat(TokenType.Let))
-            {
-                return LetStatement();
             }
             else if (Eat(TokenType.Function))
             {
@@ -223,6 +307,10 @@ namespace Hulk
             Consume(TokenType.OpParenthesis, "Expect '(' after expression");
             ASTnode value = Expr();
             Consume(TokenType.ClParenthesis, "Expect ')' after value");
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return new Print(value);
         }
 
@@ -234,6 +322,10 @@ namespace Hulk
         private ASTnode ExpressionStatement()
         {
             ASTnode expr = Expr();
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return new ExpressionStmt(expr);
         }
 
@@ -248,7 +340,10 @@ namespace Hulk
             ASTnode then_body = Statement();
             Consume(TokenType.Else, "Expect 'else declaration' after if condition");
             ASTnode else_body = Statement();
-
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return new IfStmt(condition, then_body, else_body);
         }
 
@@ -258,6 +353,10 @@ namespace Hulk
             Consume(TokenType.In, " Expected 'in' after let statement");
 
             ASTnode in_body = Statement();
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return new LetStmt(let_declarations, in_body);
 
         }
@@ -284,7 +383,10 @@ namespace Hulk
 
                 let_declarations.Add(new Hulk.Assignment(name, right));
             }
-
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return let_declarations;
 
         }
@@ -309,7 +411,10 @@ namespace Hulk
             Consume(TokenType.Imply, " Expect '=>' after function declaration");
 
             ASTnode body = Statement();
-
+            if(Check(TokenType.Semicolon))
+            {
+                Semicolon();
+            }
             return new FunctionStmt(function_name, parameters, body);
 
         }

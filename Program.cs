@@ -31,7 +31,7 @@ namespace Hulk
                 {
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     System.Console.WriteLine(e.Message);
-                    System.Console.WriteLine(e.StackTrace);
+                    //System.Console.WriteLine(e.StackTrace);
                     Console.ForegroundColor = ConsoleColor.White;
                 }
             }
