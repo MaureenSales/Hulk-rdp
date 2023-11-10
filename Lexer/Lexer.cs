@@ -6,7 +6,6 @@ namespace Hulk
         private int position = 0;
         public List<Token> Tokens = new List<Token>();
         private int start = 0;
-        private int line = 1;
 
         public Lexer(string line_)
         {
@@ -22,7 +21,7 @@ namespace Hulk
                 ScanToken();
             }
 
-            AddToken(TokenType.Eof, "EOF", -1, line);
+            AddToken(TokenType.Eof, "EOF");
             return Tokens;
         }
 
@@ -32,31 +31,31 @@ namespace Hulk
             switch (c)
             {
                 case '+':
-                    AddToken(TokenType.Sum, "+", position - 1, line);
+                    AddToken(TokenType.Sum, "+");
                     break;
                 case '-':
-                    AddToken(TokenType.Subtraction, "-", position - 1, line);
+                    AddToken(TokenType.Subtraction, "-");
                     break;
                 case '"':
                     ScanString();
                     break;
                 case '*':
-                    AddToken(TokenType.Product, "*", position - 1, line);
+                    AddToken(TokenType.Product, "*");
                     break;
                 case '/':
-                    AddToken(TokenType.Division, "/", position - 1, line);
+                    AddToken(TokenType.Division, "/");
                     break;
                 case '%':
-                    AddToken(TokenType.Modulo, "%", position - 1, line);
+                    AddToken(TokenType.Modulo, "%");
                     break;
                 case '^':
-                    AddToken(TokenType.Pow, "^", position - 1, line);
+                    AddToken(TokenType.Pow, "^");
                     break;
                 case '=':
                     ScanAssignment(c);
                     break;
                 case '@':
-                    AddToken(TokenType.Concat, "@", position - 1, line);
+                    AddToken(TokenType.Concat, "@");
                     break;
                 case '<':
                     ScanComparative(c);
@@ -65,31 +64,28 @@ namespace Hulk
                     ScanComparative(c);
                     break;
                 case '(':
-                    AddToken(TokenType.OpParenthesis, "(", position - 1, line);
+                    AddToken(TokenType.OpParenthesis, "(");
                     break;
                 case ')':
-                    AddToken(TokenType.ClParenthesis, ")", position - 1, line);
+                    AddToken(TokenType.ClParenthesis, ")");
                     break;
                 case '!':
                     ScanNegation(c);
                     break;
                 case '&':
-                    AddToken(TokenType.Conjunction, "&", -1, line);
+                    AddToken(TokenType.Conjunction, "&");
                     break;
                 case '|':
-                    AddToken(TokenType.Disjunction, "|", -1, line);
+                    AddToken(TokenType.Disjunction, "|");
                     break;
                 case ',':
-                    AddToken(TokenType.Comma, ",", position - 1, line);
+                    AddToken(TokenType.Comma, ",");
                     break;
                 case ';':
-                    AddToken(TokenType.Semicolon, ";", position - 1, line);
+                    AddToken(TokenType.Semicolon, ";");
                     break;
                 case ':':
-                    AddToken(TokenType.Colon, ":", position - 1, line);
-                    break;
-                case '\n':
-                    line++;
+                    AddToken(TokenType.Colon, ":");
                     break;
                 case ' ':
                 case '\t':
@@ -103,12 +99,12 @@ namespace Hulk
                     }
                     else if (IsDigit(c))
                     {
-                        ScanNumber(c);
+                        ScanNumber();
                     }
                     else
                     {
                         // unexpected character
-                        Error.Error_(line, Error.ErrorType.LEXICAL, "'" + c + "'", "Unexpected character.");
+                        Error.Error_(Error.ErrorType.LEXICAL, "Unexpected character '" + c + "'.");
                     }
                     break;
 
@@ -132,17 +128,15 @@ namespace Hulk
 
             if (found == false)
             {
-                Error.Error_(line, Error.ErrorType.LEXICAL, " at '" + result + "'", "Expected '\"' but not found.");
+                Error.Error_(Error.ErrorType.LEXICAL, "Expected '\"' after '" + result + "' but not found.");
             }
 
-            AddToken(TokenType.String, result, -1, line);
+            AddToken(TokenType.String, result);
         }
 
 
-        private void ScanNumber(char c)
+        private void ScanNumber()
         {
-            string result = "";
-
             while (IsDigit(Peek()))
             {
                 Advance();
@@ -157,10 +151,10 @@ namespace Hulk
             }
             if (IsAlphaC(Peek()))
             {
-                Error.Error_(line, Error.ErrorType.LEXICAL, result, " Input not valid");
+                Error.Error_(Error.ErrorType.LEXICAL, " Input not valid. ");
             }
-            result = Line.Substring(start, position - start);
-            AddToken(TokenType.Number, result, -1, line);
+            string result = Line.Substring(start, position - start);
+            AddToken(TokenType.Number, result);
         }
 
         private void ScanIdentifier(char c = '?')
@@ -178,7 +172,6 @@ namespace Hulk
                 result += c;
             }
 
-            // if else PI 
             Dictionary<string, TokenType> Identifiers = new Dictionary<string, TokenType>
              {
                 { "let", TokenType.Let},
@@ -195,11 +188,11 @@ namespace Hulk
 
             if (Identifiers.Keys.Contains(result))
             {
-                AddToken(Identifiers[result], result, -1, line);
+                AddToken(Identifiers[result], result);
             }
             else
             {
-                AddToken(TokenType.Identifier, result, -1, line);
+                AddToken(TokenType.Identifier, result);
             }
         }
 
@@ -210,16 +203,16 @@ namespace Hulk
             if (Current() == '>')
             {
                 result += Current();
-                AddToken(TokenType.Imply, result, -1, line);
+                AddToken(TokenType.Imply, result);
                 Advance();
             }
             else if (Current() == '=')
             {
                 result += Current();
-                AddToken(TokenType.Equality, result, -1, line);
+                AddToken(TokenType.Equality, result);
                 Advance();
             }
-            else AddToken(TokenType.Assignment, result, position - 1, line);
+            else AddToken(TokenType.Assignment, result);
         }
 
         private void ScanComparative(char c)
@@ -229,17 +222,17 @@ namespace Hulk
             if (Current() == '=' && c == '<')
             {
                 result += Current();
-                AddToken(TokenType.LessOrEqual, result, -1, line);
+                AddToken(TokenType.LessOrEqual, result);
                 Advance();
             }
             else if (Current() == '=' && c == '>')
             {
                 result += Current();
-                AddToken(TokenType.GreaterOrEqual, result, -1, line);
+                AddToken(TokenType.GreaterOrEqual, result);
                 Advance();
             }
-            else if (Current() != '=' && c == '<') AddToken(TokenType.LessThan, result, position - 1, line);
-            else AddToken(TokenType.GreaterThan, result, position - 1, line);
+            else if (Current() != '=' && c == '<') AddToken(TokenType.LessThan, result);
+            else AddToken(TokenType.GreaterThan, result);
         }
 
         private void ScanNegation(char c)
@@ -249,16 +242,16 @@ namespace Hulk
             if (Current() == '=')
             {
                 result += Current();
-                AddToken(TokenType.NotEqual, result, -1, line);
+                AddToken(TokenType.NotEqual, result);
                 Advance();
             }
 
-            else AddToken(TokenType.Negation, result, position - 1, line);
+            else AddToken(TokenType.Negation, result);
         }
 
-        private void AddToken(TokenType type, string value, int column, int line)
+        private void AddToken(TokenType type, string value)
         {
-            Tokens.Add(new Token(type, value, column, line));
+            Tokens.Add(new Token(type, value));
         }
 
         private char Advance()

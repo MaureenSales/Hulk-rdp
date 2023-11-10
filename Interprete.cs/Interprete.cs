@@ -4,7 +4,7 @@ namespace Hulk
 {
     public class Interprete : ASTnode.IVisitor<object>
     {
-        public static Dictionary<string, FunctionStmt> functions;
+        public static Dictionary<string, FunctionStmt>? functions;
         public Stack<Dictionary<string, object>> VariableScopes;
 
         public Interprete()
@@ -35,7 +35,7 @@ namespace Hulk
                 }
 
             }
-            return Error.Error_(1, Error.ErrorType.SEMANTIC, "", "Variable no declarada");
+            return Error.Error_(Error.ErrorType.SEMANTIC, "Undeclared varible '" + name + "'. ");
         }
 
         public object evaluate(ASTnode expr)
@@ -86,7 +86,7 @@ namespace Hulk
             switch (expr.Operator.Type)
             {
                 case TokenType.Subtraction:
-                    CheckNumberOperand(expr.Operator, right);
+                    CheckNumberOperand(right);
                     return -(double)right;
             }
 
@@ -103,21 +103,21 @@ namespace Hulk
             switch (expr.Op.Type)
             {
                 case TokenType.GreaterThan:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left > (double)right;
                 case TokenType.GreaterOrEqual:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left >= (double)right;
                 case TokenType.LessThan:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left < (double)right;
                 case TokenType.LessOrEqual:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left <= (double)right;
                 case TokenType.NotEqual: return !IsEqual(left, right);
                 case TokenType.Equality: return IsEqual(left, right);
                 case TokenType.Subtraction:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left - (double)right;
                 case TokenType.Sum:
 
@@ -130,18 +130,18 @@ namespace Hulk
                     {
                         return (string)left + (string)right;
                     }
-                    throw Error.Error_(expr.Op.Line, Error.ErrorType.SEMANTIC, "", "Operands must be two numbers or two strings.");
+                    throw Error.Error_(Error.ErrorType.SEMANTIC, "Cann't operate between " + left.GetType() + " and " + right.GetType() + "types. " );
                 case TokenType.Division:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left / (double)right;
                 case TokenType.Product:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left * (double)right;
                 case TokenType.Modulo:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return (double)left % (double)right;
                 case TokenType.Pow:
-                    CheckNumberOperands(expr.Op, left, right);
+                    CheckNumberOperands(left, right);
                     return Math.Pow((double)left, (double)right);
                 case TokenType.Concat:
                     string concated = "";
@@ -150,14 +150,14 @@ namespace Hulk
                     else if (left is bool) concated += left;
                     else
                     {
-                        throw Error.Error_(expr.Op.Line, Error.ErrorType.SEMANTIC, "", " Operator '@' cannot be used between " + left + " " + right);
+                        throw Error.Error_(Error.ErrorType.SEMANTIC, " Operator '@' cann't be used between " + left.GetType() + " and " + right.GetType() + "types. ");
                     }
                     if (right is string) concated += right;
                     else if (right is double) concated += right;
                     else if (right is bool) concated += right;
                     else
                     {
-                        throw Error.Error_(expr.Op.Line, Error.ErrorType.SEMANTIC, "", " Operator '@' cannot be used between " + left + " " + right);
+                        throw Error.Error_(Error.ErrorType.SEMANTIC, " Operator '@' cann't be used between " + left.GetType() + " and " + right.GetType() + "types. ");
                     }
                     return concated;
 
@@ -183,7 +183,7 @@ namespace Hulk
 
         public object Visit(IfStmt stmt)
         {
-            object result = null;
+            object? result = null;
             if (IsTruthy(evaluate(stmt.Condition)))
             {
                 result = evaluate(stmt.ThenBody);
@@ -208,7 +208,7 @@ namespace Hulk
             {
                 if (expr.Arguments.Count > 1)
                 {
-                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion sin(x) receive a argument");
+                    throw Error.Error_(Error.ErrorType.SEMANTIC, "Funtion sin(x) receive a argument");
                 }
                 else
                 {
@@ -219,7 +219,7 @@ namespace Hulk
                     }
                     else
                     {
-                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function sin(x) receive a double not a" + argument.GetType());
+                        throw Error.Error_(Error.ErrorType.SEMANTIC, "Function sin(x) receive a double not a" + argument.GetType());
                     }
                 }
 
@@ -228,7 +228,7 @@ namespace Hulk
             {
                 if (expr.Arguments.Count > 1)
                 {
-                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion cos(x) receive a argument");
+                    throw Error.Error_(Error.ErrorType.SEMANTIC, "Funtion cos(x) receive a argument");
                 }
                 else
                 {
@@ -239,7 +239,7 @@ namespace Hulk
                     }
                     else
                     {
-                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function cos(x) receive a double not a" + argument.GetType());
+                        throw Error.Error_(Error.ErrorType.SEMANTIC, "Function cos(x) receive a double not a" + argument.GetType());
                     }
                 }
             }
@@ -247,7 +247,7 @@ namespace Hulk
             {
                 if (expr.Arguments.Count > 1)
                 {
-                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion sin(x) receive a argument");
+                    throw Error.Error_(Error.ErrorType.SEMANTIC, "Funtion tan(x) receive a argument");
                 }
                 else
                 {
@@ -258,7 +258,7 @@ namespace Hulk
                     }
                     else
                     {
-                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function tan(x) receive a double not a" + argument.GetType());
+                        throw Error.Error_(Error.ErrorType.SEMANTIC, "Function tan(x) receive a double not a" + argument.GetType());
                     }
                 }
             }
@@ -266,7 +266,7 @@ namespace Hulk
             {
                 if (expr.Arguments.Count > 1)
                 {
-                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion sqrt(x) receive a argument");
+                    throw Error.Error_(Error.ErrorType.SEMANTIC, "Funtion sqrt(x) receive a argument");
                 }
                 else
                 {
@@ -277,7 +277,7 @@ namespace Hulk
                     }
                     else
                     {
-                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function sqrt(x) receive a double not a" + argument.GetType());
+                        throw Error.Error_(Error.ErrorType.SEMANTIC, "Function sqrt(x) receive a double not a" + argument.GetType());
                     }
                 }
             }
@@ -285,7 +285,7 @@ namespace Hulk
             {
                 if (expr.Arguments.Count > 2)
                 {
-                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Funtion log(x) receive two argument");
+                    throw Error.Error_(Error.ErrorType.SEMANTIC, "Funtion log(x) receive two argument (argument, base)");
                 }
                 else
                 {
@@ -297,14 +297,14 @@ namespace Hulk
                     }
                     else
                     {
-                        throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Function log(x) receive two doubles not " + argument1.GetType() + " and " + argument2.GetType());
+                        throw Error.Error_(Error.ErrorType.SEMANTIC, "Function log(x) receive two doubles not " + argument1.GetType() + " and " + argument2.GetType());
                     }
                 }
             }
 
             else if (!functions.ContainsKey(expr.Callee.Lexeme))
             {
-                throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Non defined function");
+                throw Error.Error_(Error.ErrorType.SEMANTIC, "Non defined function" + expr.Callee.Lexeme + ". ");
             }
             else
             {
@@ -313,7 +313,7 @@ namespace Hulk
                 EnterScope();
                 if (fun.Params.Count != expr.Arguments.Count)
                 {
-                    throw Error.Error_(expr.Callee.Line, Error.ErrorType.SEMANTIC, "", "Incorrect amount of parameters");
+                    throw Error.Error_(Error.ErrorType.SEMANTIC, "Incorrect amount of parameters");
                 }
                 else
                 {
@@ -361,7 +361,7 @@ namespace Hulk
             }
             else
             {
-                throw Error.Error_(1, Error.ErrorType.SEMANTIC, "", "Already defined function");
+                throw Error.Error_(Error.ErrorType.SEMANTIC, "Already defined function" + _stmt.Name + ". ");
             }
             return null;
         }
@@ -374,17 +374,17 @@ namespace Hulk
         {
             if (ob == null) return false;
             if (ob is bool) return (bool)ob;
-            throw Error.Error_(1, Error.ErrorType.SEMANTIC, "", "Operand must be a boolean.");
+            throw Error.Error_(Error.ErrorType.SEMANTIC, "Operand must be a boolean.");
         }
-        private void CheckNumberOperand(Token op, Object operand)
+        private void CheckNumberOperand(object operand)
         {
-            if (operand is Double) return;
-            throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operand must be a number.");
+            if (operand is double) return;
+            throw Error.Error_(Error.ErrorType.SEMANTIC, "Operand must be a number.");
         }
-        private void CheckNumberOperands(Token op, Object left, Object right)
+        private void CheckNumberOperands(object left, object right)
         {
-            if (left is Double && right is Double) return;
-            throw Error.Error_(op.Line, Error.ErrorType.SEMANTIC, "", "Operands must be numbers.");
+            if (left is double && right is double) return;
+            throw Error.Error_(Error.ErrorType.SEMANTIC, "Operands must be numbers.");
         }
         private bool IsEqual(object a, object b)
         {
