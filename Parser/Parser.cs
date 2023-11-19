@@ -58,6 +58,10 @@ namespace Hulk
                     {
                         return CallFunction();
                     }
+                    else if(Current().Type == TokenType.Assignment)
+                    {
+                        throw Error.Error_(Error.ErrorType.SINTACTIC, "Can only assign value to a variable within an expression let-in and cann't reassign valor to the variable");
+                    }
                     else return new VariableReference(name);
                 case TokenType.OpParenthesis:
                     position++;
@@ -150,9 +154,11 @@ namespace Hulk
                 }
                 return new UnaryExpr(op, right);
             }
-            if (Check(TokenType.Semicolon))
+            if(Eat(TokenType.Negation))
             {
-                Semicolon();
+                Token op = Previous();
+                ASTnode right = Primary();
+                return new UnaryExpr(op, right);
             }
             return Primary();
         }

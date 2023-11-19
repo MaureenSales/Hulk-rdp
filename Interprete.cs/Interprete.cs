@@ -88,6 +88,10 @@ namespace Hulk
                 case TokenType.Subtraction:
                     CheckNumberOperand(right);
                     return -(double)right;
+                case TokenType.Negation:
+                    IsTruthy(right);
+                    if(right is false) return true;
+                    else return false;
             }
 
             return right;
