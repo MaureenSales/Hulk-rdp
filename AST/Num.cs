@@ -2,8 +2,8 @@ namespace Hulk
 {
     public class Num: ASTnode
     {
-        public Token Token_ { get; private set; }
-        public double Value { get; private set; }
+        public Token Token_ { get; private set; }  //token numero
+        public double Value { get; private set; } //valor del token
 
         public Num( Token token)
         {

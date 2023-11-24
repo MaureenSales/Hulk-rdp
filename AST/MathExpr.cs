@@ -2,7 +2,7 @@ namespace Hulk
 {
     public class MathExpr: ASTnode
     {
-        public double Value { get; private set; }
+        public double Value { get; private set; }//expresion de tipo matematica: Euler,Pi
 
         public MathExpr( double value)
         {

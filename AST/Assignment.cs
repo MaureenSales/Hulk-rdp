@@ -2,8 +2,8 @@ namespace Hulk
 {
     public class Assignment: ASTnode
     {
-        public string Name { get; private set; }
-        public ASTnode? Value { get; set; }
+        public string Name { get; private set; } //nombre de la variable
+        public ASTnode? Value { get; set; } //valor de la variable, de tipo nodo
 
         public Assignment (string name, ASTnode value)
         {

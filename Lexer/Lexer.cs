@@ -2,10 +2,10 @@ namespace Hulk
 {
     public class Lexer
     {
-        private readonly string Line;
-        private int position = 0;
-        public List<Token> Tokens = new List<Token>();
-        private int start = 0;
+        private readonly string Line; // linea de codigo recibida del usuario
+        private int position = 0; // iterador de la posicion en el string
+        public List<Token> Tokens = new List<Token>(); // lista donde se van a guardar los tokens
+        private int start = 0; // iterador que indica el inicio de un nuevo token
 
         public Lexer(string line_)
         {
@@ -15,18 +15,20 @@ namespace Hulk
 
         public List<Token> ScanTokens()
         {
+            //si no estoy al final de la linea voy a seguir buscando tokens
             while (!IsAtEnd())
             {
                 start = position;
                 ScanToken();
             }
-
+            //si estoy al final agregar un token que lo indique en este caso Eof
             AddToken(TokenType.Eof, "EOF");
             return Tokens;
         }
 
         public void ScanToken()
         {
+            //guardo en c el primer caracter y avanzo
             char c = Advance();
             switch (c)
             {
@@ -113,8 +115,10 @@ namespace Hulk
 
         private void ScanString()
         {
+            //va guardando el valor del string mientras busca el cierre de comillas
             string result = "";
             bool found = false;
+
             while (!IsAtEnd())
             {
                 char c = Advance();
@@ -137,6 +141,8 @@ namespace Hulk
 
         private void ScanNumber()
         {
+            //voy guardando el valor de mi number tal que si aparece una letra o caracter inseperado de error 
+            //si es un punto verifica que luego venga un numero y que no hayan mas puntos
             while (IsDigit(Peek()))
             {
                 Advance();
@@ -159,6 +165,8 @@ namespace Hulk
 
         private void ScanIdentifier(char c = '?')
         {
+            //un identificador puede contener numeros mas no al principio, de este modo se escanea 
+            //si coincide con un identificador  especial se guarda como tal
             string result = "";
             result += c;
             while (!IsAtEnd())
@@ -198,6 +206,8 @@ namespace Hulk
 
         private void ScanAssignment(char c)
         {
+            //si luego del '=' matchea un '>' es un implica y asi de agrega 
+            // si es otro '=' seria de igualdad
             string result = "";
             result += c;
             if (Current() == '>')
@@ -217,6 +227,8 @@ namespace Hulk
 
         private void ScanComparative(char c)
         {
+            //si mi actual es '=' y el anterion '<' tendria un token de tipo menor  igual
+            //analogamente para mayor igual, mayor que y menor que
             string result = "";
             result += c;
             if (Current() == '=' && c == '<')
@@ -237,6 +249,7 @@ namespace Hulk
 
         private void ScanNegation(char c)
         {
+            //si luego de un '!' tengo '=' entonces es un no igual sino es un caracter de negacion
             string result = "";
             result += c;
             if (Current() == '=')
@@ -249,21 +262,25 @@ namespace Hulk
             else AddToken(TokenType.Negation, result);
         }
 
+        //recibe el typo y valor del token, genera un token y lo agrega a la lista
         private void AddToken(TokenType type, string value)
         {
             Tokens.Add(new Token(type, value));
         }
 
+        //retorna el caracter actual y avanza
         private char Advance()
         {
             return Line[position++];
         }
 
+        //retorna el caracter actual
         private char Current()
         {
             return Line[position];
         }
 
+        //verifica si tengo una letra o guion bajo 
         private bool IsAlphaC(char c)
         {
             return ('a' <= c && c <= 'z')
@@ -271,11 +288,13 @@ namespace Hulk
                 || (c == '_');
         }
 
+        //verifica si tengo un digito
         private bool IsDigit(char c)
         {
             return '0' <= c && c <= '9';
         }
 
+        //si no estoy al final devuelve el actual
         private char Peek()
         {
             if (IsAtEnd())
@@ -284,6 +303,8 @@ namespace Hulk
             }
             return Current();
         }
+
+        //si no estoy al final avanza al caracter siguiente y lo devuelve
         private char PeekNext()
         {
             if (position + 1 >= Line.Length)
@@ -293,6 +314,7 @@ namespace Hulk
             return Line[position + 1];
         }
 
+        //verifica que este al final o no de la linea
         private bool IsAtEnd()
         {
             return position >= Line.Length;

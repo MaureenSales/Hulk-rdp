@@ -3,9 +3,9 @@ namespace Hulk
 {
     public class CallFunction: ASTnode
     {
-        public Token Callee { get; private set; }
+        public Token Callee { get; private set; }//nombre de la funcion a la que se llama
         public Token Paren { get; private set; }
-        public List<ASTnode> Arguments { get; private set; }
+        public List<ASTnode> Arguments { get; private set; }//lista de argumentos tipo nodo
 
         public CallFunction( Token callee, Token paren, List<ASTnode> arguments)
         {

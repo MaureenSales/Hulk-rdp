@@ -2,7 +2,7 @@ namespace Hulk
 {
     public class String_: ASTnode
     {
-        public string Value {get; private set; }
+        public string Value {get; private set; }// valor del token string
 
         public String_ (string value)
         {

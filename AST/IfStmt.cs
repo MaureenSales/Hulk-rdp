@@ -2,9 +2,9 @@ namespace Hulk
 {
     public class IfStmt: ASTnode
     {
-        public ASTnode Condition { get; private set; }
-        public ASTnode ThenBody { get; private set; }
-        public ASTnode ElseBody { get; private set; }
+        public ASTnode Condition { get; private set; }//expresion de condicion
+        public ASTnode ThenBody { get; private set; }//expresion con instrucciones 
+        public ASTnode ElseBody { get; private set; }//expresion del cuerpo del else 
 
         public IfStmt(ASTnode condition, ASTnode then_body, ASTnode else_body)
         {

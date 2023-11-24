@@ -4,7 +4,6 @@ namespace Hulk
 {
     public abstract class ASTnode
     {
-
         public interface IVisitor<T>
         {
             T Visit(Assignment _assign);

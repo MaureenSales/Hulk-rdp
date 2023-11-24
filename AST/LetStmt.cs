@@ -2,8 +2,8 @@ namespace Hulk
 {
     public class LetStmt: ASTnode
     {
-        public List<Assignment> Declarations { get; private set; }
-        public ASTnode Body { get; private set; }
+        public List<Assignment> Declarations { get; private set; } //lista de declaraciones de variable
+        public ASTnode Body { get; private set; }//expresion del cuerpo
 
         public LetStmt ( List<Assignment> declaration, ASTnode body )
         {

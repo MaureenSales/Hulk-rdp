@@ -2,8 +2,8 @@ namespace Hulk
 {
     public class UnaryExpr: ASTnode
     {
-        public Token Operator { get; private set; }
-        public ASTnode Right { get; private set; }
+        public Token Operator { get; private set; }//operador - o !
+        public ASTnode Right { get; private set; }//expresion derecha
 
         public UnaryExpr(Token op, ASTnode expr)
         {

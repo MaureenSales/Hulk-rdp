@@ -2,7 +2,7 @@ namespace Hulk
 {
     public class Print: ASTnode
     {
-        public ASTnode Expr { get; private set; }
+        public ASTnode Expr { get; private set; }//expresion de argumento del comando print
 
         public Print(ASTnode expr)
         {

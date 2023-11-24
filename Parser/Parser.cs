@@ -4,24 +4,26 @@ namespace Hulk
 {
     public class Parser
     {
-        public Lexer Tokenized { get; private set; }
-        private int position = 0;
+        public Lexer Tokenized { get; private set; } // instancia de la clase lexer para tener un objeto de este tipo y acceder a sus propiedades
+        private int position = 0; //iterador a traves de la lista de tokens
+
         public Parser(Lexer tokenized)
         {
             Tokenized = tokenized;
-
         }
 
+        //crea una lista de nodos que son construidos con los tokens
         public List<ASTnode> Parse()
         {
             List<ASTnode> statements = new List<ASTnode>();
+
             while (!IsAtEnd())
             {
-                statements.Add(Statement());
+                statements.Add(Fun());
             }
 
             int count = Tokenized.Tokens.Count;
-
+            //verifico que la linea de codigo termine con ';'
             if (Tokenized.Tokens[count - 2].Type != TokenType.Semicolon)
             {
                 throw Error.Error_(Error.ErrorType.SINTACTIC, "Expect ';' at end expression");
@@ -31,6 +33,7 @@ namespace Hulk
 
         private ASTnode Primary()
         {
+            //dado el tipo del token actual...
             switch (Current().Type)
             {
                 case TokenType.False:
@@ -58,7 +61,7 @@ namespace Hulk
                     {
                         return CallFunction();
                     }
-                    else if(Current().Type == TokenType.Assignment)
+                    else if (Current().Type == TokenType.Assignment)
                     {
                         throw Error.Error_(Error.ErrorType.SINTACTIC, "Can only assign value to a variable within an expression let-in and cann't reassign valor to the variable");
                     }
@@ -105,6 +108,8 @@ namespace Hulk
 
         }
 
+
+        //verifica que ';' solo este al final de la linea de codigo
         private void Semicolon()
         {
             if (position != Tokenized.Tokens.Count - 2)
@@ -120,6 +125,8 @@ namespace Hulk
 
         private ASTnode CallFunction()
         {
+            //estructura de una llamada: nombre de la funcion, lista de parametros entre parentesis
+            //callee es el nombre de la funcion llamada que es el token anterior al actual
             Token callee = Previous();
             Consume(TokenType.OpParenthesis, "Expect '(' after call function ");
             List<ASTnode> arguments = new List<ASTnode>();
@@ -128,13 +135,13 @@ namespace Hulk
             {
                 do
                 {
-                    arguments.Add(Expr());
+                    arguments.Add(Or());
                 }
                 while (Eat(TokenType.Comma));
             }
 
             Token paren = Consume(TokenType.ClParenthesis, "Expect ')' after arguments");
-           
+
             if (Check(TokenType.Semicolon))
             {
                 Semicolon();
@@ -144,6 +151,7 @@ namespace Hulk
 
         private ASTnode Unary()
         {
+            //estructura de un operador unario: '-' + 'op unario' o '!' + 'expresion primaria'
             while (Eat(TokenType.Subtraction))
             {
                 Token op = Previous();
@@ -154,7 +162,7 @@ namespace Hulk
                 }
                 return new UnaryExpr(op, right);
             }
-            if(Eat(TokenType.Negation))
+            if (Eat(TokenType.Negation))
             {
                 Token op = Previous();
                 ASTnode right = Primary();
@@ -165,6 +173,7 @@ namespace Hulk
 
         private ASTnode LevelTwo()
         {
+            //se encarga de crear el operador binario de potencia que se asocia a la izquierda: a^a^b = a^(a^b) 
             ASTnode node = Unary();
             while (Eat(TokenType.Pow))
             {
@@ -180,8 +189,9 @@ namespace Hulk
             return node;
         }
 
-        private ASTnode LevelThree() // factor
+        private ASTnode LevelThree()
         {
+            //se encarga de  crear el operador binario referente al producto, la division y el modulo que se asocian a la izquierda
             ASTnode node = LevelTwo();
 
             while (Eat(TokenType.Product) || Eat(TokenType.Division) || Eat(TokenType.Modulo))
@@ -197,8 +207,9 @@ namespace Hulk
             return node;
         }
 
-        private ASTnode LevelFour() //term
+        private ASTnode LevelFour() 
         {
+            //se encarga de crear el operador binario de mas bajo nivel que seria la suma y la resta asociadas a la derecha
             ASTnode node = LevelThree();
 
             while (Eat(TokenType.Sum) || Eat(TokenType.Subtraction))
@@ -216,6 +227,7 @@ namespace Hulk
 
         private ASTnode Or()
         {
+            //comprueba si tenemos una expresion que llame logica en este caso el Or
             ASTnode expr = And();
 
             while (Eat(TokenType.Disjunction))
@@ -233,6 +245,7 @@ namespace Hulk
 
         private ASTnode And()
         {
+            //se comprueba si estamos en presencia de una expresion logica con And
             ASTnode expr = Equality();
 
             while (Eat(TokenType.Conjunction))
@@ -250,6 +263,7 @@ namespace Hulk
 
         private ASTnode Equality()
         {
+            //se encarga de crear la expresion binaria para la igualdad o la diferencia
             ASTnode node = Comparison();
             while (Eat(TokenType.Equality) || Eat(TokenType.NotEqual))
             {
@@ -267,11 +281,12 @@ namespace Hulk
 
         private ASTnode Comparison()
         {
-            ASTnode node = Concat(); //concat
+            //expresiones de comparacion mayor que, menor que, mayor igual, menor igual
+            ASTnode node = Concat(); 
             while (Eat(TokenType.LessThan) || Eat(TokenType.LessOrEqual) || Eat(TokenType.GreaterThan) || Eat(TokenType.GreaterOrEqual))
             {
                 Token op = Previous();
-                ASTnode right = LevelFour(); //concat
+                ASTnode right = Concat(); 
                 node = new BinOp(node, op, right);
             }
             if (Check(TokenType.Semicolon))
@@ -283,6 +298,7 @@ namespace Hulk
 
         private ASTnode Concat()
         {
+            //expresion binaria de concatencion con operador @
             ASTnode node = LevelFour();
             while (Eat(TokenType.Concat))
             {
@@ -296,25 +312,32 @@ namespace Hulk
             return node;
         }
 
+        private ASTnode Fun()
+        {
+            //verifica si hay una declaracion de funcion y llama al metodo q se encarga de consumirla 
+            if (Eat(TokenType.Function))
+            {
+                return Function();
+            }
+            return Statement();
+        }
 
         private ASTnode Statement()
         {
-
+            //verifica si hay un comando print y llama al metodo que lo consume y crea el nodo de la expresion
             if (Eat(TokenType.Print))
             {
                 return PrintStatement();
             }
-            else if (Eat(TokenType.Function))
-            {
-                return Function();
-            }
+
             return ExpressionStatement();
         }
 
         private ASTnode PrintStatement()
         {
+            //consume la llamada a print y devuelve su nodo 
             Consume(TokenType.OpParenthesis, "Expect '(' after function print");
-            ASTnode value = Expr();
+            ASTnode value = Or();
             Consume(TokenType.ClParenthesis, "Expect ')' after value in function print");
             if (Check(TokenType.Semicolon))
             {
@@ -323,14 +346,10 @@ namespace Hulk
             return new Print(value);
         }
 
-        private ASTnode Expr()
-        {
-            return Or();
-        }
-
         private ASTnode ExpressionStatement()
         {
-            ASTnode expr = Expr();
+            //inicia los llamados para una nueva expresion (mas simple que un llamado print por ejemplo)
+            ASTnode expr = Or();
             if (Check(TokenType.Semicolon))
             {
                 Semicolon();
@@ -339,11 +358,11 @@ namespace Hulk
         }
 
 
-
         private ASTnode IfStatement()
         {
+            //Consume la estructura de una expresion condicional: if(expresion condicional) expresion else(expresion)
             Consume(TokenType.OpParenthesis, "Expect '(' before if condition.");
-            ASTnode condition = Expr();
+            ASTnode condition = Or();
             Consume(TokenType.ClParenthesis, "Expect ')' after if condition.");
 
             ASTnode then_body = Statement();
@@ -358,10 +377,12 @@ namespace Hulk
 
         private ASTnode LetStatement()
         {
+            //consume la primera mitad de una expresion let-in: let asignacion  
             List<Assignment> let_declarations = Assignment();
             Consume(TokenType.In, " Expected 'in' after let statement");
 
             ASTnode in_body = Statement();
+           
             if (Check(TokenType.Semicolon))
             {
                 Semicolon();
@@ -372,13 +393,14 @@ namespace Hulk
 
         private List<Assignment> Assignment()
         {
+            //segunda mitad de la expresion let-in y declaraciones de variables con su asignacion de valor
             List<Assignment> let_declarations = new List<Assignment>();
 
             while (Current().Type != TokenType.In)
             {
                 string name = Current().Lexeme; Consume(TokenType.Identifier, "Expect variable name not token type " + Current().Type);
                 Consume(TokenType.Assignment, "Expect '=' after variable name");
-                ASTnode right = Expr();
+                ASTnode right = Or();
 
                 if (Current().Type != TokenType.In)
                 {
@@ -402,6 +424,7 @@ namespace Hulk
 
         private ASTnode Function()
         {
+            //consume la declaracion de una funcion: function identificador(argumentos) => expresion general que no puede ser otra declaracion
             string function_name = Consume(TokenType.Identifier, "Expect function name after 'function'").Lexeme;
             Consume(TokenType.OpParenthesis, "Expect '(' after function name.");
             List<Assignment> parameters = new List<Assignment>();
@@ -430,28 +453,33 @@ namespace Hulk
 
         private Token Current()
         {
+            //token actual
             return Tokenized.Tokens[position];
         }
 
         private Token Previous()
         {
+            //token anterior
             return Tokenized.Tokens[position - 1];
         }
 
         private Token Advance()
         {
+            //avanza y retorna el token de la posicion antes de avanzar
             if (!IsAtEnd()) position++;
             return Previous();
         }
 
         private bool IsAtEnd()
         {
+            //verifica si esta al final de la lista de tokens
             if (Current().Type == TokenType.Eof) return true;
             return false;
         }
 
         private bool Eat(TokenType type)
         {
+            //chequea un tipo determinado y avanza si es el mismo tipo
             if (Check(type))
             {
                 position++;
@@ -461,12 +489,14 @@ namespace Hulk
         }
         private Token Consume(TokenType type, String message)
         {
+            //chequea un tipo determinado y avanza devolviendo el anterior o lanza un error
             if (Check(type)) return Advance();
 
             throw Error.Error_(Error.ErrorType.SINTACTIC, message);
         }
         private bool Check(TokenType type)
         {
+            //recibe un tipo y lo compara con el tipo del token actual
             if (IsAtEnd()) return false;
             return Current().Type == type;
         }

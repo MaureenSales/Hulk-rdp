@@ -2,7 +2,7 @@ namespace Hulk
 {
     public class VariableReference : ASTnode
     {
-        public string Name { get; private set; }
+        public string Name { get; private set; }//nombre de la variable
 
         public VariableReference(string name)
         {

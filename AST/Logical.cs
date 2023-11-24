@@ -2,9 +2,9 @@ namespace Hulk
 {
     public class Logical: ASTnode
     {
-        public ASTnode Left { get; private set; }
-        public Token Operator { get; private set; }
-        public ASTnode Right { get; private set; }
+        public ASTnode Left { get; private set; }//nodo de expresion a la izquierda
+        public Token Operator { get; private set; }//operador binario logico
+        public ASTnode Right { get; private set; }//nodo de expresion a la derecha
 
         public Logical( ASTnode left, Token op, ASTnode right)
         {

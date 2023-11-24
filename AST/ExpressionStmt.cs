@@ -4,7 +4,7 @@ namespace Hulk
 {
     public class ExpressionStmt: ASTnode
     {
-        public ASTnode expression { get; private set; }
+        public ASTnode expression { get; private set; } //expresion tipo nodo
         public ExpressionStmt(ASTnode expr)
         {
             this.expression = expr;

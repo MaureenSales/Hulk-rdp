@@ -2,7 +2,7 @@ namespace Hulk
 {
     public class Boolean: ASTnode
     {
-        public bool Value { get; private set; }
+        public bool Value { get; private set; } //valor de verdad
 
         public Boolean( bool value)
         {
